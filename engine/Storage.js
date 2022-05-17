@@ -1,10 +1,12 @@
+import { folder } from "jszip";
+
 export default {
   async newStorage() {
     return new Promise(async (resolve, reject) => {
       window.requestFileSystem =
         window.requestFileSystem || window.webkitRequestFileSystem;
       let type = TEMPORARY;
-      let targetBytes = 1024 * 1024 * 500; //500MB
+      let targetBytes = 1024 * 1024 * 800; //500MB
       if (type == TEMPORARY) {
         window.requestFileSystem(
           TEMPORARY,
@@ -146,6 +148,19 @@ export default {
           reject(err);
         }
       );
+    });
+  },
+  async removeFolder(fs, foldername) {
+    return new Promise((resolve, reject) => {
+      console.log(foldername);
+      fs.root
+        .removeFolder(foldername)
+        .then((res) => {
+          console.log(res);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     });
   },
   async getURL(fs, filename) {

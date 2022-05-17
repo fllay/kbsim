@@ -262,7 +262,7 @@ export const actions = {
     // );
     return true;
   },
-  async deleteDatasetItems({ commit, state }, items) {
+  async deleteDatasetItems({ commit, state, rootState }, items) {
     //items = ["id","id"] //only ids
     //check existing vm
     if (!this._vm.$fs) {
@@ -280,5 +280,19 @@ export const actions = {
     commit("removeDatasetItems", items);
     return true;
   },
-  async clearDataset(context) {},
+  async clearDataset({ commit, state }) {
+    //check existing vm
+    if (state.dataset.project) {
+      // check project exist
+      if (!this._vm.$fs) {
+        await prepareDataset(this._vm, state.dataset);
+      }
+      //removeFolder
+      console.log("vvvvvvvvv");
+      console.log(state.dataset.project);
+      //let res = await storage.removeFolder(projectId);
+    } else {
+      return true;
+    }
+  },
 };

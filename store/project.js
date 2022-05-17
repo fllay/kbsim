@@ -78,6 +78,7 @@ export const actions = {
     //save to server
     context.commit("setProject", project);
   },
+
   async fetchProjects(context) {
     // fetch project
     let projects = [];

@@ -9,12 +9,13 @@
       data-md-tooltip="เปิด Project ที่เคยสร้างไว้แล้ว"
       class="btn-base open"
       v-b-modal.open-project-modal
+      :disabled="isLoading|| isOpening || isSaving"
     />
     <div
       data-md-tooltip="บันทึกข้อมูล"
       class="btn-base save"
       @click="saveProject"
-      :disabled="isLoading || isSaving"
+      :disabled="isLoading || isSaving || isOpening"
     >
       <b-spinner v-if="isSaving" small />
     </div>
@@ -37,14 +38,14 @@ export default {
       'isLoading',
       'isSaving',
     ]),
-    ...mapState(['currentDevice']),
+    ...mapState(['currentDevice','isOpening']),
     isBrowser(){
       return this.currentDevice === "BROWSER";
     }
   },
   methods: {
     ...mapActions([
-      'saveProject'
+      'saveProject',
     ])
   }
 }

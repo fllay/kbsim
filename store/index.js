@@ -9,6 +9,9 @@ export const state = () => ({
   //----- save project ------//
   saving: false,
   savingProgress: 0,
+  //----- open project ------//
+  opening: false,
+  openingProgress: 0,
 });
 //---- modal id ----//
 //new-project-modal
@@ -26,6 +29,16 @@ export const mutations = {
   },
   setSavingProgress(state, progress) {
     state.savingProgress = progress;
+  },
+  setOpening(state, data) {
+    state.opening = data;
+  },
+  setOpeningProgress(state, progress) {
+    state.openingProgress = progress;
+  },
+  restoreState(state, currentState) {
+    state = Object.assign(state, currentState);
+    //console.log(state);
   },
 };
 
@@ -73,6 +86,16 @@ export const actions = {
         });
     } else if (state.currentDevice == "ROBOT") {
       //sync project instead
+    }
+  },
+  async openProject({ commit, dispatch, state, rootState }, projectState) {
+    commit("setOpening", true);
+    commit("setOpeningProgress", 0);
+    let that = this;
+    if (state.currentDevice == "BROWSER") {
+      commit("restoreState", projectState);
+    } else if (state.currentDevice == "ROBOT") {
+      //TODO : implement here
     }
   },
 };
