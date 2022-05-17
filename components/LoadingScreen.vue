@@ -2,7 +2,7 @@
   <div class="hello">
     <div class="panel">
       <div class="mascot">
-        <img src="../assets/images/ui/png/Group 102.png" alt="" srcset="" />
+        <img src="../assets/images/UI/png/Group 102.png" alt="" srcset="" />
         <div class="balloon">
           <p class="txt">
             ยินดีต้อนรับเข้าสู่ <span class="highlight">KidBright AI IDE</span

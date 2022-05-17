@@ -5,17 +5,17 @@
       <p>ขั้นตอนนี้ใช้สำหรับกำหนดขอบเขตและติดป้ายกำกับให้วัตถุ</p>
       <p>
         <br />1. กดปุ่ม
-        <img src="~/assets/images/ui/svg/Group 97.svg" alt="" srcset="" />
+        <img src="~/assets/images/UI/svg/Group 97.svg" alt="" srcset="" />
         เพื่อตั้งชื่อป้ายกำกับให้กับวัตถุแต่ละชนิด 
       </p>
       <p>
         <br />2. กำหนดขอบเขตของวัตถุ โดยทำการลากคลุมวัตถุให้อยู่ภายในกรอบสี่เหลี่ยม
-        <img src="~/assets/images/ui/svg/Group 96.svg" alt="" srcset="" />
+        <img src="~/assets/images/UI/svg/Group 96.svg" alt="" srcset="" />
         ที่กำหนดพอดี ไม่ตีกรอบใหญ่หรือเล็กเกินไป 
       </p>
       <p>
         <br />3. กดปุ่ม
-        <img src="~/assets/images/ui/svg/interface.svg" alt="" srcset="" />
+        <img src="~/assets/images/UI/svg/interface.svg" alt="" srcset="" />
         หลังชื่อป้ายกำกับ เมื่อต้องการใช้ชื่อที่ตั้งไว้เเล้ว จะปรากฏป้ายกำกับพร้อมพิกัดอยู่บริเวณขวามือ
       </p>
       <p>
@@ -23,7 +23,7 @@
       </p>
     </div>
     <div class="mascot">
-      <img src="~/assets/images/ui/png/Mask Group 11.png" alt="" srcset="" />
+      <img src="~/assets/images/UI/png/Mask Group 11.png" alt="" srcset="" />
     </div>
   </div>
 </template>
