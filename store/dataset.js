@@ -129,9 +129,9 @@ export const getters = {
     return state.dataset.baseURL;
   },
 };
-const prepareDataset = async (vm, dataset) => {
+const prepareDataset = async (vm, dataset, projectId) => {
   vm.$fs = await storage.newStorage();
-  let dirEntry = await storage.createDir(vm.$fs, dataset.project);
+  let dirEntry = await storage.createDir(vm.$fs, projectId || dataset.project);
   return dirEntry;
 };
 export const actions = {
@@ -143,7 +143,16 @@ export const actions = {
     dataset.baseURL = dirEntry.toURL();
     context.commit("setDatset", dataset);
   },
-
+  async addFileToFs({ commit, state, dispatch }, file) {
+    if (!this._vm.$fs) {
+      await prepareDataset(this._vm, state.dataset);
+    }
+    await storage.writeFile(
+      this._vm.$fs,
+      `${state.dataset.project}/${data.id}.${data.ext}`,
+      data.image
+    );
+  },
   async addData({ commit, state, dispatch }, data) {
     //check existing vm
     if (!this._vm.$fs) {
@@ -164,16 +173,12 @@ export const actions = {
     delete data.thumbnail;
     commit("addDatasetItem", data);
   },
-  async addDataToFs({ state }, data) {
+  async addFileToFs({ state }, { projectId, file }) {
     //check existing vm
     if (!this._vm.$fs) {
-      await prepareDataset(this._vm, state.dataset);
+      await prepareDataset(this._vm, state.dataset, projectId);
     }
-    await storage.writeFile(
-      this._vm.$fs,
-      `${state.dataset.project}/${data.id}.${data.ext}`,
-      data.image
-    );
+    await storage.writeFile(this._vm.$fs, `${projectId}/${file.name}`, file);
   },
   async getData({ commit, state }, filename) {
     //check existing vm
@@ -281,18 +286,16 @@ export const actions = {
     return true;
   },
   async clearDataset({ commit, state }) {
-    //check existing vm
     if (state.dataset.project) {
       // check project exist
       if (!this._vm.$fs) {
         await prepareDataset(this._vm, state.dataset);
       }
       //removeFolder
-      console.log("vvvvvvvvv");
-      console.log(state.dataset.project);
-      //let res = await storage.removeFolder(projectId);
-    } else {
-      return true;
+      let res = await storage.removeFolder(this._vm.$fs, state.dataset.project);
+      if (res) {
+        this._vm.$fs = null;
+      }
     }
   },
 };

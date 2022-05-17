@@ -38,7 +38,7 @@
       <div v-if="step >= 2" class="text-center">
         <vm-progress
               type="circle"
-              :percentage="progress"
+              :percentage="percentage"
               style="vertical-align: middle"
               strokeColor="#007E4E"
               stroke-width="24"
@@ -82,8 +82,8 @@ export default {
     }
   },
   methods : {
-    ...mapActions(["openProject"]),
-    ...mapActions("dataset",["clearDataset"]),
+    ...mapMutations(["restoreProject"]),
+    ...mapActions("dataset",["addFileToFs","clearDataset"]),
     clearForm(){
       this.selectType = null;
       this.projectToOpen = null;
@@ -104,19 +104,26 @@ export default {
         this.step = 2;
         this.progress = 0;
         let projectFile = this.files.find(el=>el.name == "project.json");
+        if(!projectFile){
+          this.step = 1;
+          this.$toast.error("Folder ที่เลือกไม่พบโปรเจคไฟล์");
+          return false;
+        }
         // parse project file
+        let files = this.files.filter(el=>el.name != projectFile.name);
         let projectJsonText = await this.$helper.readFile(projectFile);
         let projectJson = JSON.parse(projectJsonText);
-        console.log(projectJson);
-        //let projectId = projectJson.project.project.id;
-        // await this.openProject(projectJson);
-        // for(let file of this.files){
-        //   this.progress+=1;
-        //   this.percentage= Math.round(this.progress/this.files.length*100);
-        //   //await this.delay(100);
-        // }
+        let projectId = projectJson.project.project.id;
+        await this.clearDataset(); //clear old dataset file
+        console.log("cleared");
+        for(let file of files){
+          this.progress+=1;
+          this.percentage= Math.round(this.progress/files.length*100);
+          await this.addFileToFs({projectId : projectId, file : file});
+        }
+        this.restoreProject(projectJson); //assign new dataset
         this.step = 3;
-        console.log("import success");
+        this.$toast.success("เปิดโปรเจคและนำเข้าเสร็จเรียบร้อย");
       }else if(this.step == 3){
         //import success 
       }

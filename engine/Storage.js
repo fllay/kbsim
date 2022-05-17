@@ -153,14 +153,24 @@ export default {
   async removeFolder(fs, foldername) {
     return new Promise((resolve, reject) => {
       console.log(foldername);
-      fs.root
-        .removeFolder(foldername)
-        .then((res) => {
-          console.log(res);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+      fs.root.getDirectory(
+        foldername,
+        { create: false },
+        (folderEntry) => {
+          console.log(folderEntry);
+          folderEntry.removeRecursively(
+            () => {
+              resolve(true);
+            },
+            (err) => {
+              reject(err);
+            }
+          );
+        },
+        (err) => {
+          reject(err);
+        }
+      );
     });
   },
   async getURL(fs, filename) {
