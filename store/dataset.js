@@ -143,16 +143,16 @@ export const actions = {
     dataset.baseURL = dirEntry.toURL();
     context.commit("setDatset", dataset);
   },
-  async addFileToFs({ commit, state, dispatch }, file) {
-    if (!this._vm.$fs) {
-      await prepareDataset(this._vm, state.dataset);
-    }
-    await storage.writeFile(
-      this._vm.$fs,
-      `${state.dataset.project}/${data.id}.${data.ext}`,
-      data.image
-    );
-  },
+  // async addFileToFs({ commit, state, dispatch }, file) {
+  //   if (!this._vm.$fs) {
+  //     await prepareDataset(this._vm, state.dataset);
+  //   }
+  //   await storage.writeFile(
+  //     this._vm.$fs,
+  //     `${state.dataset.project}/${data.id}.${data.ext}`,
+  //     data.image
+  //   );
+  // },
   async addData({ commit, state, dispatch }, data) {
     //check existing vm
     if (!this._vm.$fs) {
@@ -179,6 +179,17 @@ export const actions = {
       await prepareDataset(this._vm, state.dataset, projectId);
     }
     await storage.writeFile(this._vm.$fs, `${projectId}/${file.name}`, file);
+  },
+  async addDataToFs({ state }, data) {
+    //check existing vm
+    if (!this._vm.$fs) {
+      await prepareDataset(this._vm, state.dataset);
+    }
+    await storage.writeFile(
+      this._vm.$fs,
+      `${state.dataset.project}/${data.id}.${data.ext}`,
+      data.image
+    );
   },
   async getData({ commit, state }, filename) {
     //check existing vm

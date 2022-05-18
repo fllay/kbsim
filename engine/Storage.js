@@ -152,12 +152,10 @@ export default {
   },
   async removeFolder(fs, foldername) {
     return new Promise((resolve, reject) => {
-      console.log(foldername);
       fs.root.getDirectory(
         foldername,
         { create: false },
         (folderEntry) => {
-          console.log(folderEntry);
           folderEntry.removeRecursively(
             () => {
               resolve(true);
