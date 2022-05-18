@@ -18,8 +18,9 @@
         <b-button class="btn base-btn" v-b-modal.inferenceDetection>
           Test
         </b-button>
-        <b-button class="btn base-btn" :disabled="!isTrained" @click="downloadModel">
-          Download
+        <b-button class="btn base-btn" :disabled="!isTrained || isConverting" @click="downloadModel">
+          <b-spinner v-if="isConverting" small></b-spinner>
+          {{isConverting? "Converting...":"Download"}}
         </b-button>
       </b-input-group-append>
     </b-input-group>
@@ -65,18 +66,21 @@ export default {
   },
   methods: {
     ...mapMutations("server",["setURL"]),
-    ...mapActions("server",["connect"]),
+    ...mapActions("server",["connect","convert_model"]),
       openColab: () => {
       window.open(
         "https://colab.research.google.com/drive/1hXm39yBfaTuRC4j-gJK1AyZaOqUv7Bvr?usp=sharing",
         "_blank"
       );
     },
-    downloadModel: function(){
-      window.open(
-        this.url+ "/download_model",
-        "_blank"
-      );
+    downloadModel: async function(){
+      let res = await this.convert_model();
+      if(res){
+        window.open(
+          this.url+ "/download_model?project_id=" + this.$store.state.project.project.id,
+          "_blank"
+        );
+      }
     },
     connectServer: function(){
       console.log("connect server");
@@ -105,7 +109,7 @@ export default {
     
   },
   computed: {
-    ...mapState("server",["isConnected","isTraining","isTerminating","isTrained"]),
+    ...mapState("server",["isConnected","isTraining","isTerminating","isTrained","isConverting","isConverted"]),
     downloadable: function() {
       return this.isDone && !this.isDownloading;
     },
