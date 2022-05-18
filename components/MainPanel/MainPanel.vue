@@ -30,7 +30,7 @@
           }"
           @click="project.id && handleTabChange(1)"
         >
-          <img src="~/assets/images/ui/png/capture.png" alt="" srcset="" />
+          <img src="~/assets/images/UI/png/capture.png" alt="" srcset="" />
         </li>
         <li
           v-bind:class="{
@@ -43,7 +43,7 @@
             }
           "
         >
-          <img src="~/assets/images/ui/png/annotate.png" alt="" srcset="" />
+          <img src="~/assets/images/UI/png/annotate.png" alt="" srcset="" />
         </li>
         <li
           :class="{
@@ -56,7 +56,7 @@
             }
           "
         >
-          <img src="~/assets/images/ui/png/train.png" alt="" srcset="" />
+          <img src="~/assets/images/UI/png/train.png" alt="" srcset="" />
         </li>
         <li
           :class="{
@@ -64,14 +64,14 @@
           }"
           @click="handleTabChange(4)"
         >
-          <img src="~/assets/images/ui/png/code.png" alt="" srcset="" />
+          <img src="~/assets/images/UI/png/code.png" alt="" srcset="" />
         </li>
       </ul>
       <div v-if="project.projectType == null" class="hint">
         <div class="main-hint txt notype">
           <p v-if="project.projectType == null">
             เริ่มใช้งานโดยกด
-            <img src="~/assets/images/ui/png/Group 105.png" alt="" srcset="" />
+            <img src="~/assets/images/UI/png/Group 105.png" alt="" srcset="" />
             เพื่อสร้างโปรเจคและทำการเลือกประเภทการเรียนรู้
             <span class="p-color">Object Detection</span> หรือ
             <span class="p-color">Image Classification</span
@@ -86,7 +86,7 @@
         <div class="mascot">
           <img
             v-if="!isRunning"
-            src="~/assets/images/ui/png/Mask Group 11.png"
+            src="~/assets/images/UI/png/Mask Group 11.png"
             alt=""
             srcset=""
           />

@@ -23,13 +23,13 @@
     <div class="mascot">
       <img
         v-if="!isRunning"
-        src="~/assets/images/ui/png/Mask Group 11.png"
+        src="~/assets/images/UI/png/Mask Group 11.png"
         alt=""
         srcset=""
       />
       <img
         v-if="isRunning"
-        src="~/assets/images/ui/svg/Mask Group 10.svg"
+        src="~/assets/images/UI/svg/Mask Group 10.svg"
         alt=""
         srcset=""
       />

@@ -4,7 +4,7 @@
       <p class="p-color font-weight-bold">ขั้นตอนที่ 1 Capture (Object Detection)</p>
       <p>
         ขั้นตอนนี้เป็นการใช้งานกล้องในการเก็บภาพที่ต้องการ โดยกดปุ่ม
-        <img src="~/assets/images/ui/svg/Group 113.svg" alt="" srcset="" />
+        <img src="~/assets/images/UI/svg/Group 113.svg" alt="" srcset="" />
         เพื่อถ่ายภาพ 
         <br> ควรถ่ายภาพวัตถุในมุมต่างๆ ประมาณ 50 ภาพต่อวัตถุหรือมากกว่า
         และสามารถถ่ายภาพวัตถุหลายชนิดหรือหลายชิ้นในภาพเดียวกันได้ ไม่จำกัดจำนวน 
@@ -12,7 +12,7 @@
       </p>
     </div>
     <div class="mascot">
-      <img src="~/assets/images/ui/png/Mask Group 11.png" alt="" srcset="" />
+      <img src="~/assets/images/UI/png/Mask Group 11.png" alt="" srcset="" />
     </div>
   </div>
 </template>
