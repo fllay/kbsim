@@ -19,6 +19,7 @@ export const filter = (mutation) => {
 };
 export const mutations = {
   setProject(state, project) {
+    console.log("set project");
     state.project = project;
   },
   setProjects(state, projects) {

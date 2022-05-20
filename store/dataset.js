@@ -135,13 +135,14 @@ const prepareDataset = async (vm, dataset, projectId) => {
   return dirEntry;
 };
 export const actions = {
-  async createDataset(context, dataset) {
+  async createDataset({ dispatch, commit }, dataset) {
+    dispatch("clearDataset");
     if (dataset.data == undefined) {
       dataset.data = [];
     }
     let dirEntry = await prepareDataset(this._vm, dataset);
     dataset.baseURL = dirEntry.toURL();
-    context.commit("setDatset", dataset);
+    commit("setDatset", dataset);
   },
   // async addFileToFs({ commit, state, dispatch }, file) {
   //   if (!this._vm.$fs) {
@@ -295,6 +296,15 @@ export const actions = {
     }
     commit("removeDatasetItems", items);
     return true;
+  },
+  async restoreDataset({ commit, state }, dataset) {
+    if (!this._vm.$fs) {
+      await prepareDataset(this._vm, state.dataset);
+    }
+    console.log("Restore dataset ...");
+    let dirEntry = await storage.getDirectory(this._vm.$fs, dataset.project);
+    dataset.baseURL = dirEntry.toURL();
+    commit("setDatset", dataset);
   },
   async clearDataset({ commit, state }) {
     if (state.dataset.project) {

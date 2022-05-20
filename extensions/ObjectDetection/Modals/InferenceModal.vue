@@ -16,7 +16,7 @@
             class="bbox" 
             :style="{left: box.x1+'px', top : box.y1+'px', width:(box.x2-box.x1)+'px',height:(box.y2-box.y1)+'px'}"
           >
-          {{box.label}}
+          <span class="label-box">{{box.label}} : {{box.prob.toFixed(2)}}</span>
           </div>
         </div>
         <image-capture 
@@ -153,7 +153,10 @@ export default {
     width: 100%;
     height: 100%;
     position: absolute;
-    padding: 25px;
+    padding-top: 35px;
+    padding-bottom: 35px;
+    padding-left: 20px;
+    padding-right: 20px;
   }
   .bbox{
     display: block;
@@ -161,5 +164,9 @@ export default {
     border-width: 3px;
     border-color: green;
     border-style: solid;
+  }
+  .label-box{
+    color: black;
+    background-color: #fff;
   }
 </style>

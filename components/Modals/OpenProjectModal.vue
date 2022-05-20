@@ -82,8 +82,8 @@ export default {
     }
   },
   methods : {
-    ...mapMutations(["restoreProject"]),
-    ...mapActions("dataset",["addFileToFs","clearDataset"]),
+    ...mapMutations("project",["setProject"]),
+    ...mapActions("dataset",["addFileToFs","clearDataset","restoreDataset"]),
     clearForm(){
       this.selectType = null;
       this.projectToOpen = null;
@@ -121,7 +121,8 @@ export default {
           this.percentage= Math.round(this.progress/files.length*100);
           await this.addFileToFs({projectId : projectId, file : file});
         }
-        this.restoreProject(projectJson); //assign new dataset
+        this.restoreDataset(projectJson.dataset.dataset);
+        this.setProject(projectJson.project.project); //assign new dataset
         this.step = 3;
         this.$toast.success("เปิดโปรเจคและนำเข้าเสร็จเรียบร้อย");
       }else if(this.step == 3){

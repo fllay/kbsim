@@ -1,5 +1,3 @@
-import { folder } from "jszip";
-
 export default {
   async newStorage() {
     return new Promise(async (resolve, reject) => {
@@ -164,6 +162,20 @@ export default {
               reject(err);
             }
           );
+        },
+        (err) => {
+          reject(err);
+        }
+      );
+    });
+  },
+  async getDirectory(fs, dirName) {
+    return new Promise((resolve, reject) => {
+      fs.root.getDirectory(
+        dirName,
+        { create: false },
+        (entry) => {
+          resolve(entry);
         },
         (err) => {
           reject(err);

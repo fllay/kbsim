@@ -36,11 +36,11 @@ export const mutations = {
   // setOpeningProgress(state, progress) {
   //   state.openingProgress = progress;
   // },
-  restoreProject(state, currentState) {
-    state.dataset = currentState.dataset;
-    state.project = currentState.project;
-    //console.log(state);
-  },
+  // restoreProject(state, currentState) {
+  //   state.dataset = currentState.dataset;
+  //   state.project = currentState.project;
+  //   //console.log(state);
+  // },
 };
 
 export const actions = {
