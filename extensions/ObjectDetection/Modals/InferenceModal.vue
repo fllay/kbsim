@@ -28,7 +28,18 @@
         ></image-capture>  
       </div>
       <div class="infer_control">
-        <b-avatar button @click="onInfer" :disabled="!cameraReady" variant="primary" :icon="terminated? 'play-fill':'stop-fill'" class="align-baseline"></b-avatar>
+        <b-form-group
+          label-cols-sm="8"
+          label-cols-lg="8"
+          content-cols-sm
+          content-cols-lg="3"
+          label="Object Detection threshold"
+          label-for="input-threshold"
+        >
+          <b-form-input id="input-threshold" type="number" placeholder="detection threshold ex : 0.5" v-model="threshold" min=0.1 max=0.9 step=0.1></b-form-input>
+        </b-form-group>
+        <b-avatar button @click="onInfer" :disabled="cameraReady == false" variant="primary" :icon="terminated? 'play-fill':'stop-fill'" class="align-baseline"></b-avatar>
+        
       </div>
     </b-modal>
 </template>
@@ -47,7 +58,8 @@ export default {
       cameraReady : false,
       terminated: false,
       result: "-",
-      prob: 0
+      prob: 0,
+      threshold : 0.5
     }
   },
   computed: {
@@ -69,7 +81,7 @@ export default {
       let project_id = this.project.id;
       formData.append("project_id", project_id);
       formData.append("type", "detection");
-      formData.append("threshold", "0.3");
+      formData.append("threshold", this.threshold || 0.5);
       try{
         let res = await axios({
           method: "POST",
