@@ -69,7 +69,7 @@ export default {
     ...mapActions("server",["connect","convert_model"]),
       openColab: () => {
       window.open(
-        "https://colab.research.google.com/drive/1hXm39yBfaTuRC4j-gJK1AyZaOqUv7Bvr?usp=sharing",
+        "https://colab.research.google.com/drive/11t5yJUNjLZwAb_926Izrw2NrqhWIZzZX",
         "_blank"
       );
     },
