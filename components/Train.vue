@@ -73,7 +73,7 @@ export default {
   methods: {
     onCreate: () => {
       window.open(
-        "https://colab.research.google.com/drive/1aG7kNzByeqW2fvWWHT5fM4Nmpt48nt8J",
+        "https://colab.research.google.com/drive/11t5yJUNjLZwAb_926Izrw2NrqhWIZzZX",
         "_blank"
       );
     },
