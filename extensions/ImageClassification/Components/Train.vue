@@ -5,10 +5,11 @@
         <b-button class="btn-create" variant="primary" @click="openColab">Create</b-button>
       </b-input-group-prepend>
       <b-form-input
-        v-model="url"
+        :value="url"
         @change="connectServer"
         placeholder="Put Google Colab URL here . . ."
       ></b-form-input>
+      {{url}}sss
       <b-input-group-append>
         <b-button class="btn train-btn" :variant="isTraining?'danger':'primary'" :disabled="!isConnected || isTerminating" @click="handleTrain()">
           <b-spinner v-if="isTerminating" small></b-spinner>
@@ -59,7 +60,6 @@ export default {
   props: {},
   data() {
     return {
-      url: "",//http://localhost:500
       file: null,
       isDownloading : false,
     };
@@ -82,13 +82,14 @@ export default {
         );
       }
     },
-    connectServer: function(){
+    connectServer: function(url){
       console.log("connect server");
       const regex = new RegExp(
         /^(?:http(s)?:\/\/)?[\w.-]+(?:\.[\w.-]+)+[\w\-._~:/?#[\]@!$&'()*+,;=.]+$/
       );
-      if(this.url != "" || regex.test(this.url)){
-        this.setURL(this.url);
+      if(url != "" || regex.test(url)){
+        console.log("set url to ", url);
+        this.setURL(url);
         this.connect();
         this.setTrained(false);
       }
@@ -110,7 +111,7 @@ export default {
     
   },
   computed: {
-    ...mapState("server",["isConnected","isTraining","isTerminating","isTrained","isConverting","isConverted"]),
+    ...mapState("server",["url","isConnected","isTraining","isTerminating","isTrained","isConverting","isConverted"]),
     downloadable: function() {
       return this.isDone && !this.isDownloading;
     },
