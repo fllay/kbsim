@@ -170,13 +170,13 @@ $secondary-color: #007e4e;
 }
 .img-slider {
   display: -webkit-box;
-  width: calc(100% - 50px); //margin 25 + 25 = 50
+  width: calc(100% - 30px); //margin 25 + 25 = 50
   height: 100%;
   position: relative;
-  margin-top: 15px;
-  margin-right: 25px;
-  margin-bottom: 15px;
-  margin-left: 25px;
+  margin-top: 25px;
+  margin-right: 15px;
+  margin-bottom: 25px;
+  margin-left: 15px;
   .labeled::after  {
       content: "";
       position: absolute;
