@@ -164,6 +164,13 @@ export const actions = {
       `${state.dataset.project}/${data.id}.${data.ext}`,
       data.image
     );
+    if (data.sound && data.sound_ext) {
+      await storage.writeFile(
+        this._vm.$fs,
+        `${state.dataset.project}/${data.id}.${data.sound_ext}`,
+        data.sound
+      );
+    }
     // --- disabled thumbnail for now --- //
     // await storage.writeFile(
     //   this._vm.$fs,
@@ -172,6 +179,7 @@ export const actions = {
     // );
     delete data.image;
     delete data.thumbnail;
+    delete data.sound;
     commit("addDatasetItem", data);
   },
   async addFileToFs({ state }, { projectId, file }) {

@@ -1,8 +1,8 @@
 <template>
-  <div class="img-slider" @mousewheel="scrollX">
+  <div class="img-slider">
     <DynamicScroller
       :items="dataList"
-      :min-item-size="135"
+      :min-item-size="75"
       direction="vertical"
       class="scroller"
       ref="img_scroller"
@@ -17,7 +17,7 @@
           <div
             :key="index"
             :class="{
-              img: true,
+              'dataset-item' : true,
               active: multiple? value.includes(item.id) : value === item.id,
             }"
             @click="selectImage($event,item.id,index)"
@@ -25,13 +25,27 @@
             <div v-if="showInfo && item.annotate.length" class="annotate-data">
               <span>{{item.annotate.length}}</span>
             </div>
-            <b-img-lazy class="thumb" :src="`${getBaseURL}/${item.id}.${item.ext}`" alt="" srcset="">
-            </b-img-lazy>
-            <div v-if="showInfo && item.class" class="label-data">
+            <WaveFormPlayer 
+              :id="item.id" 
+              :sound_ext="item.sound_ext" 
+              :img_ext="item.ext" 
+              :delay="project.options.duration" 
+              :ref="`wav_${item.id}`"
+              @onPlay="onPlay"
+              @onEnd="onEnd"
+              :volume="volume"
+            >
+            </WaveFormPlayer>
+            <!-- <div v-if="showInfo && item.class" class="label-data">
               {{item.class}}
+            </div> -->
+            <div class="control">
+              <img src="~/assets/images/UI/svg/wave-icon.svg" height="20" class="op-btn" @click="el=>$emit('mfcc',item.id)"/>
+              <img v-if="playing != item.id" src="~/assets/images/UI/svg/play-icon.svg" height="20" class="op-btn" @click="playHandler(item.id)"/>
+              <img v-else src="~/assets/images/UI/svg/pause-icon.svg" height="20" class="op-btn-disabled"/>
             </div>
+            <img title="กดปุ่ม CTRL ค้างไว้ เพื่อทำการลบรูปที่เลือก" class="cancel-btn" src="~/assets/images/UI/png/cancel.png" @click="removeItem($event,item)"/>
           </div>
-          <img title="กดปุ่ม CTRL ค้างไว้ เพื่อทำการลบรูปที่เลือก" class="cancel-btn" src="~/assets/images/UI/png/cancel.png" @click="removeItem($event,item)"/>
         </DynamicScrollerItem>
       </template>
     </DynamicScroller>
@@ -39,13 +53,20 @@
 </template>
 
 <script>
+import WaveFormPlayer from "./WaveFormPlayer.vue";
 import { mapState, mapActions, mapMutations , mapGetters } from 'vuex';
 export default {
   name: "SoundDatasetList",
-  components: { },
+  components: {
+    WaveFormPlayer
+  },
   props:{
     value:{
       //type : String,
+    },
+    volume: {
+      type: Number,
+      default : 0.5
     },
     multiple:{
       type: Boolean,
@@ -61,13 +82,29 @@ export default {
       selected: this.value,
       lastSelectedIndex : 0,
       //current : this.current,
+      playing : null,
     };
   },
   computed: {
     ...mapGetters("dataset",[ 'dataList','getBaseURL','positionOf']),
+    ...mapState("project",[ 'project']),
   },
   methods: {
     ...mapActions("dataset",["getDataList","deleteDatasetItem","deleteDatasetItems"]),
+    async playHandler(id){
+      if (this.$refs[`wav_${id}`]){
+        this.$emit("play",id);
+        await this.$refs[`wav_${id}`].play();
+      }else{
+        console.log("ref not found id : ", id);
+      }
+    },
+    async onPlay(id){
+      this.playing = id;
+    },
+    async onEnd(id){
+      this.playing = null;
+    },
     selectImage(event,item,index){
       if(this.multiple){
         // ---- multiple select ---- //
@@ -101,8 +138,8 @@ export default {
         this.$emit("input",item);
       }
     },
+
     async removeItem(e,item){
-      
       if(this.multiple){
         // if(this.selected.length > 1){
         //   let confirm = await this.$dialog.confirm({ text: 'ต้องการลบ', title : ""});
@@ -130,14 +167,12 @@ export default {
         }
       }
     },
-    scrollX(e) {
-      e.preventDefault();
-      let el = document.getElementsByClassName("vue-recycle-scroller")[0];
-      el.scrollLeft += e.deltaY;
-    },
   }
 };
 </script>
+<style>
+
+</style>
 <style lang="scss" scoped>
 $primary-color: #007e4e;
 $secondary-color: #007e4e;
@@ -167,15 +202,16 @@ $secondary-color: #007e4e;
   width: 100%;
   display: block;
   overflow-y: scroll !important;
+  padding-right: 10px;
 }
 .img-slider {
   display: -webkit-box;
   width: calc(100% - 30px); //margin 25 + 25 = 50
-  height: 100%;
+  height: calc(100vh - 280px); //250px margin top , margin bottom 15px
   position: relative;
-  margin-top: 25px;
+  margin-top: 15px;
   margin-right: 15px;
-  margin-bottom: 25px;
+  margin-bottom: 15px;
   margin-left: 15px;
   .labeled::after  {
       content: "";
@@ -188,58 +224,64 @@ $secondary-color: #007e4e;
       border-radius: 20px;
       pointer-events: none;
   }
-  .img {
-    background-color: #2f3241;
-    height: 120px;
-    width: 120px;
+  .dataset-item {
+    background-color: #cccccc;
+    height: 60px;
+    width: 100%;
     margin-top: 15px;
-    margin-right: 5px;
     margin-bottom: 0px;
-    margin-left: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 20px;
+    border-radius: 30px;
     overflow: hidden;
     position: relative;
-    opacity: 0.7;
+    opacity: 0.8;
     transition: opacity 0.3s ease-in;
     cursor: pointer;
+    &.active{
+      background-color: $primary-color;
+    }
     &.active,
     &:hover {
       opacity: 1;
     }
-    &.active::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 100%;
-      width: 100%;
-      border: 7px solid $primary-color;
-      border-radius: 20px;
-      pointer-events: none;
+    .control{
+      background-color: white;
+      margin-left: 10px;
+      margin-right: 15px;
+      padding: 10px;
+      border-radius: 25px;
+      display: inline-flex;
+      img {
+        margin-left: 10px;
+        margin-right: 10px;
+      }
     }
-    .thumb {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    
   }
   .cancel-btn {
-    position: absolute;
-    right: -5px;
-    top: 0px;
+    margin-right: 13px;
     width: 30px;
     height: 30px;
-    opacity: 0.8;
     transition: opacity 0.2s ease-in;
+    opacity: 1;
     cursor: pointer;
     &.active,
     &:hover {
-      opacity: 1;
+      opacity: 0.8;
     }
+  }
+  .op-btn {
+    transition: opacity 0.3s ease-in;
+    cursor: pointer;
+    &:hover {
+      opacity: 0.7;
+    }
+  }
+  .op-btn-disable{
+    pointer-events: none;  
+    -webkit-filter: grayscale(100%); /* Safari 6.0 - 9.0 */
+    filter: grayscale(100%);
   }
 }
 </style>

@@ -1,18 +1,25 @@
 <template>
-  <div
-    :class="[
-      'recorder-container d-flex align-items-center',
-      recording ? 'recorder-container-active' : '',
-    ]"
-  >
+  <div class="recorder-container d-flex align-items-center">
+    <div v-if="recording" class="recorder-container-active"></div>
     <p v-if="counting > 0" class="counting-timer-p">
       {{ counting }}
     </p>
-    <div class="full">
+    <div v-show="id == null" class="full">
       <canvas id="waveform-client"></canvas>
     </div>
+    <div v-show="id != null" class="full">
+      <WaveFormPlayer 
+      :id="id" 
+      sound_ext="wav" 
+      img_ext="jpg" 
+      :delay="project.options.duration" 
+      :ref="`wavsuf`"
+      :mute="true"
+      >
+      </WaveFormPlayer>
+    </div>
     <div class="recorder-wrap">
-      <div class="vol-adj d-flex" v-if="activeIndex !== -1">
+      <div class="vol-adj d-flex">
         <img
           src="~/assets/images/UI/svg/volume-up.svg"
           height="16"
@@ -21,29 +28,29 @@
         <b-form-input
           type="range"
           v-model="volume"
+          @change="(v)=>$emit('volumeChange',parseFloat(v))"
           min="0"
           max="1"
           step="0.1"
         ></b-form-input>
       </div>
-      <div id="volControls">
       <div class="time-counter">
         <span class="current-time">{{
           timeCurrent ? timeCurrent + ":00": "0:00"
         }}</span
         ><span>/ {{ project.options.duration }}:00</span>
       </div>
-      <!-- <div class="rec-counter" v-if="activeIndex === -1">
-        {{ getAudiosLength }} Records
-      </div> -->
-      </div>
     </div>
   </div>
 </template>
 <script>
-import { mapState, mapActions } from 'vuex';
+import WaveFormPlayer from "./WaveFormPlayer.vue";
+import { mapState, mapActions, mapGetters } from 'vuex';
 export default {
-  props: ["current"],
+  components: {
+    WaveFormPlayer
+  },
+  props: ["id"],
   // model: {
   //     prop: 'myInput',
   //     event: 'blur'
@@ -59,6 +66,7 @@ export default {
       activeIndex:0,
       audioContext: null,
       audioSource: null,
+      audioGain: null,
     };
   },
   computed: {
@@ -69,7 +77,7 @@ export default {
     }
   },
   methods: {
-    draw(audioCtx, mediaStreamSource, time, segment=200.0){
+    draw(audioCtx, mediaStreamSource, time){
       return new Promise((resolve,reject)=>{
         let canvas = document.getElementById("waveform-client");
         canvas.style.width = "100%";
@@ -105,66 +113,25 @@ export default {
           }
         }
         requestAnimationFrame(animate);
-      // for(let i=0;i<segment;i++){
-      //   analyser.getByteTimeDomainData(dataArray);
-      //   //let v = dataArray.reduce((a,b)=> a+b,0) / dataArray.length; //zero = 128 mean
-      //   let v = Math.max.apply(null,dataArray) - 128; // max
-      //   let actualHigh = v / 256 * h * 1.5 + 3;
-      //   await this.$helper.sleep(time/segment);
-      //   ctx.fillRect(i * w, (h - actualHigh) / 2,w - 0.5, actualHigh);
-      // }
-      
       });
-      // let canvas = document.getElementById("waveform-client");
-      // canvas.style.width = "100%";
-      // canvas.style.height = "100%";
-      // canvas.width = canvas.offsetWidth;
-      // canvas.height = canvas.offsetHeight;
-      // let ctx = canvas.getContext("2d");
-      // ctx.fillStyle = '#FFA500';
-      // ctx.imageSmoothingEnabled = false;
-      // let analyser = audioCtx.createAnalyser();
-      // analyser.fftSize = 2048;
-      // let bufferLength = analyser.frequencyBinCount;
-      // let dataArray = new Uint8Array(bufferLength);
-      // mediaStreamSource.connect(analyser);
-      // let w = canvas.width / segment;
-      // let h = canvas.height;
-      // let startTime = new Date();
-      // let sectionData = [];
-      // let prev = 0;
-      // function animate(){
-      //   let esp = (new Date()) - startTime;
-      //   esp /= 1000;
-      //   let section = (esp / segment) | 0; //or with 0 cast to int
-      //   if(esp < time){
-      //     if(section > prev){
-      //       analyser.getByteTimeDomainData(dataArray);
-      //       let v = Math.max.apply(null,dataArray) - 128; // max
-      //       let actualHigh = v / 256 * h * 1.5 + 3;
-      //       ctx.fillRect(section * w, (h - actualHigh) / 2, w - 0.5, actualHigh);
-      //       prev = section;
-      //     }
-      //     requestAnimationFrame(animate);
-      //   } 
-      // }
-      // requestAnimationFrame(animate);
-      // // for(let i=0;i<segment;i++){
-      // //   analyser.getByteTimeDomainData(dataArray);
-      // //   //let v = dataArray.reduce((a,b)=> a+b,0) / dataArray.length; //zero = 128 mean
-      // //   let v = Math.max.apply(null,dataArray) - 128; // max
-      // //   let actualHigh = v / 256 * h * 1.5 + 3;
-      // //   await this.$helper.sleep(time/segment);
-      // //   ctx.fillRect(i * w, (h - actualHigh) / 2,w - 0.5, actualHigh);
-      // // }
-      // mediaStreamSource.disconnect(analyser);
     },
-    recordComplete(rec,blob){
-      console.log(blob);
+    async recordComplete(rec,blob){
       console.log("recorded");
+      let img = await this.downloadPreview();
+      this.$emit("recorded", {sound : blob, preview : img});
+      this.clearCanvas();
+    },
+    downloadPreview(){
+      return new Promise(resolve=>{
+        const tmpCanvas = document.getElementById("waveform-client");
+        tmpCanvas.toBlob(resolve, "image/jpeg", 0.8);
+      });
     },
     async initRecord(){
       this.audioContext = new AudioContext();
+      this.audioGain = this.audioContext.createGain();
+      this.audioGain.gain.value = this.volume; // setting it to 10%
+      this.audioGain.connect(this.audioContext.destination);
       try{
         let stream = await navigator.mediaDevices.getUserMedia({audio: true,video: false});
         this.audioSource = this.audioContext.createMediaStreamSource(stream);
@@ -175,7 +142,7 @@ export default {
             timeLimit: 3,
             encodeAfterRecord: true,
         });
-        this.recorder.onComplete = this.recordComplete.bind(this);
+        this.recorder.onComplete = await this.recordComplete.bind(this);
         return true;
       }catch(err){
         console.log(err);
@@ -224,6 +191,13 @@ export default {
       this.recording = false;
       console.log("=== end record ===");
     },
+    async simulatePlay(){
+      if(this.$refs.wavsuf){
+        this.startTimer();
+        await this.$refs.wavsuf.play();
+        this.stopTimer();
+      }
+    },
     startTimer(){
       this.timeCurrent = 0;
       this.timeCounter  = setInterval(()=>{
@@ -240,9 +214,12 @@ export default {
 $primary-color: #007e4e;
 .counting-timer-p{
   color: #6b6b6b;
-  width: 100%;
-  text-align: center;
-  font-size: 80px;
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 120px;
   position: absolute;
 }
 .recorder-container {
@@ -255,7 +232,7 @@ $primary-color: #007e4e;
     align-items: center;
     position: absolute;
     bottom: 30px;
-    right: 30px;
+    left: 30px;
     z-index: 1;
     .vol-adj {
       background-color: #fff;
@@ -298,8 +275,12 @@ $primary-color: #007e4e;
 }
 .recorder-container-active {
   border: 10px solid #007e4e !important;
+  position: absolute;
+  width: 100%;
+  height: 100%;
 }
 .full {
+  position: relative;
   width: 100%;
   height: 100%;
 }

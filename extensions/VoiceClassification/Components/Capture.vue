@@ -3,9 +3,13 @@
     <div class="d-flex w-100 h-100 outer-wrap">
       <div class="d-flex flex-fill flex-column main-panel bg-white">
         <div class="d-flex flex-fill align-items-center justify-content-center view-panel">
-          <SoundCapture ref="soundCapture"></SoundCapture>
+          <SoundCapture ref="soundCapture" @recorded="onRecordComplete" :id="current.slice(-1).pop()" @volumeChange="v=>volume = v"></SoundCapture>
+          <p class="view-img-desc center-pos" v-if="(current.length == null || current.length <= 0) && !isRecording">
+            No selected item, please click on the list below to select.
+          </p>
+          <dataset-counter :current="current.length ? positionOf(current.slice(-1).pop())+1 : null" prefix="Select" suffix="Voices"></dataset-counter>
         </div>
-        <SoundDatasetList v-model="current" :multiple="true" :showInfo="true"></SoundDatasetList>
+        <SoundDatasetList v-model="current" :multiple="true" :showInfo="true" @mfcc="onMFCC" @play="onPlay" :volume="volume"></SoundDatasetList>
       </div>
       <div class="side-panel" style="width: 300px">
         <div class="w-100">
@@ -36,7 +40,7 @@
         </div>
       </div>
     </div>
-    <import-images></import-images>
+    <MfccModal ref="mfcc-modal"></MfccModal>
   </div>
 </template>
 
@@ -45,21 +49,20 @@ import { mapState, mapActions, mapMutations , mapGetters } from 'vuex';
 import SoundCapture from '~/components/InputConnection/SoundCapture.vue';
 import SoundDatasetList from "~/components/InputConnection/SoundDatasetList.vue";
 import DatasetCounter from '~/components/InputConnection/DatasetCounter.vue';
-import ImportImages from '../Modals/ImportImages.vue';
-
+import MfccModal from "../Modals/MfccModal.vue"
 export default {
   name: "Capture",
   components: {
     SoundCapture,
     SoundDatasetList,
     DatasetCounter,
-    ImportImages
+    MfccModal
   },
   data() {
     return {
       current : [],
-      cameraReady : false,
       isRecording : false,
+      volume : 0.5
     };
   },
   computed: {
@@ -69,6 +72,7 @@ export default {
   methods: {
     ...mapActions("dataset",["addData"]),
     async record(){
+      this.current = [];
       this.isRecording = true;
       let recorder = this.$refs["soundCapture"];
       if(!recorder){
@@ -76,24 +80,34 @@ export default {
       }
       await recorder.record();
       this.isRecording = false;
-      console.log("record clicked");
+    },
+    async onPlay(id){
+      if(this.$refs.soundCapture){
+        await this.$refs.soundCapture.simulatePlay();
+      }
+    },
+    async onMFCC(id){
+      if(this.$refs["mfcc-modal"]){
+        await this.$refs["mfcc-modal"].display(id);
+      }
+    },
+    async onRecordComplete({sound, preview}){
+      let data = {
+        id : this.$helper.randomString(16),
+        thumbnail : null,
+        image: preview,
+        annotate : [],
+        sound : sound,
+        class: null,
+        ext : "jpg",
+        sound_ext : "wav"
+      };
+      let res = await this.addData(data);
+      this.current = [data.id];
+    },
+    async play(id){
+
     }
-    // async snapAndSave(){
-    //   if(!this.cameraReady){
-    //     return;
-    //   }
-    //   let {image, thumbnail, width, height} = await this.$refs.camera.snap();
-    //   let data = {
-    //     id : this.$helper.randomString(16),
-    //     thumbnail : thumbnail,
-    //     image: image,
-    //     annotate : [],
-    //     class: null,
-    //     ext : "jpg"
-    //   };
-    //   let res = await this.addData(data);
-    //   this.current = [data.id];
-    // },
   }
 };
 </script>
@@ -175,5 +189,15 @@ $primary-color: #007e4e;
   .view-img-desc {
     color: #fff;
   }
+}
+.center-pos {
+  color: white;
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+  text-align: center;
 }
 </style>
