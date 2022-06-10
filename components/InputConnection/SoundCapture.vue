@@ -6,6 +6,7 @@
     </p>
     <div v-show="id == null" class="full">
       <canvas id="waveform-client"></canvas>
+      <canvas id="mfcc-client" width="320" height="320" style="display:none"></canvas>
     </div>
     <div v-show="id != null" class="full">
       <WaveFormPlayer 
@@ -63,7 +64,7 @@ export default {
       timeCounter : null,
       counting: 0,
       recorder : null,
-      activeIndex:0,
+      analyser : null,
       audioContext: null,
       audioSource: null,
       audioGain: null,
@@ -115,15 +116,32 @@ export default {
         requestAnimationFrame(animate);
       });
     },
+    analyed(features){
+            let esp = (new Date()) - startTime;
+            let x = esp / duration * width;
+            let h = height / features["mfcc"].length;
+            let mfcc = features["mfcc"];
+            for(let i in mfcc){
+              let v = mfcc[i];
+              //let color = this.colorTemperatureToRGB(v * 20000);
+              ctx.fillStyle = `rgb(${((v * 100) | 0)}, 0, 0)`
+              ctx.fillRect(prevX, i * h, x - prevX, h); 
+            }
+            prevX = x;
+            //startTime = new Date();
+    },
     async recordComplete(rec,blob){
       console.log("recorded");
-      let img = await this.downloadPreview();
+      let img = await this.downloadPreview("waveform-client");
       this.$emit("recorded", {sound : blob, preview : img});
       this.clearCanvas();
     },
-    downloadPreview(){
+    recordTimeout(){
+      console.log("record timeout");
+    },
+    downloadPreview(id){
       return new Promise(resolve=>{
-        const tmpCanvas = document.getElementById("waveform-client");
+        const tmpCanvas = document.getElementById(id);
         tmpCanvas.toBlob(resolve, "image/jpeg", 0.8);
       });
     },
@@ -139,10 +157,20 @@ export default {
         this.recorder = new WebAudioRecorder(this.audioSource, {
             workerDir: "js/",
             encoding: "wav",
-            timeLimit: 3,
+            timeLimit: this.project.options.duration,
             encodeAfterRecord: true,
+
         });
         this.recorder.onComplete = await this.recordComplete.bind(this);
+        this.recorder.onTimeout = this.recordTimeout.bind(this);
+
+        this.analyzer = Meyda.createMeydaAnalyzer({
+          audioContext: audioCtx,
+          source: source,
+          bufferSize: 512,
+          featureExtractors: ["rms","mfcc"],
+          callback: this.analyed.bind(this)
+        });
         return true;
       }catch(err){
         console.log(err);
@@ -179,17 +207,18 @@ export default {
       this.recorder.startRecording();
       this.startTimer();
       
-      await this.draw(this.audioContext, this.audioSource, this.project.options.duration * 1000);
+      await this.$helper.sleep(this.project.options.delay);
+      //await this.draw(this.audioContext, this.audioSource, this.project.options.duration * 1000);
       
-      this.stopTimer();
-      this.recorder.finishRecording();
+      //this.stopTimer();
+      //this.recorder.finishRecording();
       //this.audioSource.disconnect(this.audioContext.destination); //get the encoding
       //--------------------------- //      
-      this.$emit("onStopRecord");
+      //this.$emit("onStopRecord");
       //await this.$helper.sleep(this.project.options.delay);
       //--------------------------- //
-      this.recording = false;
-      console.log("=== end record ===");
+      //this.recording = false;
+      //console.log("=== end record ===");
     },
     async simulatePlay(){
       if(this.$refs.wavsuf){
