@@ -117,18 +117,19 @@ export default {
       });
     },
     analyed(features){
-            let esp = (new Date()) - startTime;
-            let x = esp / duration * width;
-            let h = height / features["mfcc"].length;
-            let mfcc = features["mfcc"];
-            for(let i in mfcc){
-              let v = mfcc[i];
-              //let color = this.colorTemperatureToRGB(v * 20000);
-              ctx.fillStyle = `rgb(${((v * 100) | 0)}, 0, 0)`
-              ctx.fillRect(prevX, i * h, x - prevX, h); 
-            }
-            prevX = x;
-            //startTime = new Date();
+      console.log(features);
+            // let esp = (new Date()) - startTime;
+            // let x = esp / duration * width;
+            // let h = height / features["mfcc"].length;
+            // let mfcc = features["mfcc"];
+            // for(let i in mfcc){
+            //   let v = mfcc[i];
+            //   //let color = this.colorTemperatureToRGB(v * 20000);
+            //   ctx.fillStyle = `rgb(${((v * 100) | 0)}, 0, 0)`
+            //   ctx.fillRect(prevX, i * h, x - prevX, h); 
+            // }
+            // prevX = x;
+            // //startTime = new Date();
     },
     async recordComplete(rec,blob){
       console.log("recorded");
@@ -165,8 +166,8 @@ export default {
         this.recorder.onTimeout = this.recordTimeout.bind(this);
 
         this.analyzer = Meyda.createMeydaAnalyzer({
-          audioContext: audioCtx,
-          source: source,
+          audioContext: this.audioContext,
+          source: this.audioSource,
           bufferSize: 512,
           featureExtractors: ["rms","mfcc"],
           callback: this.analyed.bind(this)
@@ -207,18 +208,18 @@ export default {
       this.recorder.startRecording();
       this.startTimer();
       
-      await this.$helper.sleep(this.project.options.delay);
+      await this.$helper.sleep(5000);
       //await this.draw(this.audioContext, this.audioSource, this.project.options.duration * 1000);
       
-      //this.stopTimer();
-      //this.recorder.finishRecording();
+      this.stopTimer();
+      this.recorder.finishRecording();
       //this.audioSource.disconnect(this.audioContext.destination); //get the encoding
       //--------------------------- //      
       //this.$emit("onStopRecord");
       //await this.$helper.sleep(this.project.options.delay);
       //--------------------------- //
-      //this.recording = false;
-      //console.log("=== end record ===");
+      this.recording = false;
+      console.log("=== end record ===");
     },
     async simulatePlay(){
       if(this.$refs.wavsuf){
