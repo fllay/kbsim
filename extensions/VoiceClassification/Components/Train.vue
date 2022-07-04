@@ -15,7 +15,7 @@
           <b-spinner v-else-if="isTraining" small type="grow"></b-spinner>
           {{ isTraining ? "Terminate" : "Train" }}
         </b-button>
-        <b-button class="btn base-btn" v-b-modal.inference :disabled="!isTrained">
+        <b-button class="btn base-btn" v-b-modal.inference>
           Test
         </b-button>
         <b-button class="btn base-btn" :disabled="!isTrained || isConverting" @click="downloadModel">

@@ -8,38 +8,32 @@
       :hide-footer="true"
       @close="onClose"
       @hide="onClose"
+      @shown="onShow"
     >
       <div class="display-screen">
-        <image-capture 
-          :width="435"
-          source="" 
-          ref="camera" 
-          @started="_=>(cameraReady=true)" 
-          @stoped="_=>(cameraReady=false)"
-        ></image-capture>  
+        <ContinueMfccCapture ref="capture" @onImage="onImageReady"></ContinueMfccCapture>
       </div>
       <div class="infer-class">
         <img class="tag" src="~/assets/images/UI/svg/Group 177_green.svg" height="24" />
         <span>{{result}} [{{(this.prob * 100).toFixed(2)}}%]</span>
       </div>
       <div class="infer_control">
-        <b-avatar button @click="onInfer" :disabled="!cameraReady" variant="primary" :icon="terminated? 'play-fill':'stop-fill'" class="align-baseline"></b-avatar>
+        <b-avatar button @click="onInfer" variant="primary" :icon="terminated? 'play-fill':'stop-fill'" class="align-baseline"></b-avatar>
       </div>
     </b-modal>
 </template>
 <script>
 import axios from 'axios';
 import { mapState, mapActions, mapMutations , mapGetters } from 'vuex';
-import ImageCapture from '~/components/InputConnection/ImageCapture.vue';
+import ContinueMfccCapture from '~/components/InputConnection/ContinueMfccCapture.vue';
 export default {
   name : "InferenceModal",
   components:{
-    ImageCapture
+    ContinueMfccCapture
   },
   data(){
     return {
       terminated : true,
-      cameraReady : false,
       result: "-",
       prob: 0
     }
@@ -53,6 +47,9 @@ export default {
       if(this.terminated){
         return;
       }
+      await this.$refs.capture.record();
+    },
+    onImageReady : async function(){
       if(!this.cameraReady){
         await this.sleep(500);
         return await this.doInference();
@@ -93,6 +90,7 @@ export default {
     onClose: async function(){
       this.terminated = true;
       this.cameraReady = false;
+      this.$refs.capture.endRecord();
     },
     sleep: function(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
