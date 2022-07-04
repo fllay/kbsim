@@ -3,14 +3,14 @@
     <div class="d-flex w-100 h-100 outer-wrap">
       <div class="d-flex flex-fill flex-column main-panel bg-white">
         <div class="d-flex flex-fill align-items-center justify-content-center view-panel">
-          <image-display v-if="current.length" :id="current.slice(-1).pop()"></image-display>
-          <p class="view-img-desc" v-if="!current.length">
+          <SoundCapture ref="soundCapture" :id="current.slice(-1).pop()" @volumeChange="v=>volume = v"></SoundCapture>
+          <p class="view-img-desc center-pos" v-if="!current.length">
             No selected image, please click on the image below to select.
           </p>
-          <dataset-counter class="second-counter" prefix="Labeled" seperator="of" :current="getLabeledLength" suffix="Image"></dataset-counter>
-          <dataset-counter prefix="Selected" seperator="of" :current="current.length" suffix="Image"></dataset-counter>
+          <dataset-counter prefix="Labeled" seperator="of" :current="getLabeledLength" suffix="Sound"></dataset-counter>
+          <dataset-counter class="second-counter" prefix="Selected" seperator="of" :current="current.length" suffix="Sound"></dataset-counter>
         </div>
-        <image-dataset-list v-model="current" :multiple="true" :showInfo="true"></image-dataset-list>
+        <SoundDatasetList v-model="current" :multiple="true" :showInfo="true" @mfcc="onMFCC" @play="onPlay" :volume="volume"></SoundDatasetList>
       </div>
       <div class="side-panel">
         <div class="w-100">
@@ -65,24 +65,28 @@
         <div class="w-100"></div>
       </div>
     </div>
+    <MfccModal ref="mfcc-modal"></MfccModal>
   </div>
 </template>
 
 <script>
 import { mapState, mapActions, mapMutations , mapGetters } from 'vuex';
-import ImageDisplay from '~/components/InputConnection/ImageDisplay.vue';
-import ImageDatasetList from "~/components/InputConnection/ImageDatasetList.vue";
+import SoundCapture from '~/components/InputConnection/SoundCapture.vue';
+import SoundDatasetList from "~/components/InputConnection/SoundDatasetList.vue";
 import DatasetCounter from '~/components/InputConnection/DatasetCounter.vue';
+import MfccModal from "../Modals/MfccModal.vue"
 
 export default {
   name: "Anotate",
   components: {
-    ImageDisplay,
-    ImageDatasetList,
+    SoundCapture,
+    SoundDatasetList,
     DatasetCounter,
+    MfccModal
   },
   data() {
     return {
+      volume: 0.5,
       current : [],
     };
   },
@@ -116,6 +120,16 @@ export default {
       //this.setDataClass({ids: this.current.filter(el=>el ),label:null});
       this.changeDataClassWhere({ ids: this.current, oldLabel : label, newLabel : null });
     },
+    async onPlay(id){
+      if(this.$refs.soundCapture){
+        await this.$refs.soundCapture.simulatePlay();
+      }
+    },
+    async onMFCC(id){
+      if(this.$refs["mfcc-modal"]){
+        await this.$refs["mfcc-modal"].display(id);
+      }
+    },
   },
   computed: {
     ...mapGetters("project",["getLabels"]),
@@ -127,7 +141,7 @@ export default {
 <style lang="scss" scoped>
 $primary-color: #007e4e;
 .second-counter{
-  margin-bottom: 50px;
+  margin-right: 230px;
 }
 .op-btn {
   transition: opacity 0.3s ease-in;
@@ -274,5 +288,15 @@ $primary-color: #007e4e;
   .view-img-desc {
     color: #fff;
   }
+}
+.center-pos {
+  color: white;
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 20px;
+  text-align: center;
 }
 </style>

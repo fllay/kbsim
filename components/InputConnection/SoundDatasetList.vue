@@ -36,9 +36,13 @@
               :volume="volume"
             >
             </WaveFormPlayer>
-            <!-- <div v-if="showInfo && item.class" class="label-data">
+            <div v-if="showInfo && item.class" class="label-data">
+              <img src="~/assets/images/UI/svg/Group 177_green.svg" height="20" style="padding-right: 10px"/>
               {{item.class}}
-            </div> -->
+            </div>
+            <div v-if="showInfo && item.class">
+                <img src="~/assets/images/UI/svg/Group 177_grey.svg" height="20"/>
+              </div>
             <div class="control">
               <img src="~/assets/images/UI/svg/wave-icon.svg" height="20" class="op-btn" @click="el=>$emit('mfcc',item.id)"/>
               <img v-if="playing != item.id" src="~/assets/images/UI/svg/play-icon.svg" height="20" class="op-btn" @click="playHandler(item.id)"/>
@@ -178,10 +182,11 @@ $primary-color: #007e4e;
 $secondary-color: #007e4e;
 .label-data{
   position: absolute;
-  bottom: 0px;
-  width: 100%;
+  border-radius: 25px;
+  left: 15px;
+  padding: 10px;
   text-align: center;
-  background-color: #000000b5;
+  background-color: rgba(0,0,0,0.7098);
   color: white;
   font-size: 15px;
 }

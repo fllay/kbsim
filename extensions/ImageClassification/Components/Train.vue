@@ -9,7 +9,6 @@
         @change="connectServer"
         placeholder="Put Google Colab URL here . . ."
       ></b-form-input>
-      {{url}}sss
       <b-input-group-append>
         <b-button class="btn train-btn" :variant="isTraining?'danger':'primary'" :disabled="!isConnected || isTerminating" @click="handleTrain()">
           <b-spinner v-if="isTerminating" small></b-spinner>

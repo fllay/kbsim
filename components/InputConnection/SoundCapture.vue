@@ -6,7 +6,7 @@
     </p>
     <div v-show="id == null" class="full">
       <canvas id="waveform-client"></canvas>
-      <canvas id="mfcc-client" width="320" height="320" style="display:none"></canvas>
+      <canvas id="mfcc-client" width="224" height="224" style="display:none;"></canvas>
     </div>
     <div v-show="id != null" class="full">
       <WaveFormPlayer 
@@ -47,6 +47,7 @@
 <script>
 import WaveFormPlayer from "./WaveFormPlayer.vue";
 import { mapState, mapActions, mapGetters } from 'vuex';
+import Meyda from "meyda";
 export default {
   components: {
     WaveFormPlayer
@@ -68,6 +69,12 @@ export default {
       audioContext: null,
       audioSource: null,
       audioGain: null,
+      rmsCanvas: null,
+      mfccCanvas: null,
+      canvasSize : [0,0],
+      startTime: 0,
+      prevX : 0,
+      prevMX : 0,
     };
   },
   computed: {
@@ -78,67 +85,39 @@ export default {
     }
   },
   methods: {
-    draw(audioCtx, mediaStreamSource, time){
-      return new Promise((resolve,reject)=>{
-        let canvas = document.getElementById("waveform-client");
-        canvas.style.width = "100%";
-        canvas.style.height = "100%";
-        canvas.width = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
-        let ctx = canvas.getContext("2d");
-        ctx.fillStyle = '#FFA500';
-        ctx.imageSmoothingEnabled = false;
-        let analyser = audioCtx.createAnalyser();
-        analyser.fftSize = 2048;
-        let bufferLength = analyser.frequencyBinCount;
-        let dataArray = new Uint8Array(bufferLength);
-        mediaStreamSource.connect(analyser);
-        let w = canvas.width;
-        let h = canvas.height;
-        let startTime = new Date();
-        let sectionData = [];
-        let prevX = 0;
-        function animate(){
-          let esp = (new Date()) - startTime;
-          let progressWidth = esp / time * w;
-          analyser.getByteTimeDomainData(dataArray);
-          let v = Math.max.apply(null,dataArray) - 128; // max  
-          let actualHigh = v / 256 * h * 1.5 + 3;
-          ctx.fillRect(prevX, (h - actualHigh) / 2, progressWidth - prevX, actualHigh);
-          prevX = progressWidth;
-          if(esp < time){
-            requestAnimationFrame(animate);
-          }else{
-            mediaStreamSource.disconnect(analyser);
-            return resolve(sectionData);
-          }
-        }
-        requestAnimationFrame(animate);
-      });
-    },
     analyed(features){
-      console.log(features);
-            // let esp = (new Date()) - startTime;
-            // let x = esp / duration * width;
-            // let h = height / features["mfcc"].length;
-            // let mfcc = features["mfcc"];
-            // for(let i in mfcc){
-            //   let v = mfcc[i];
-            //   //let color = this.colorTemperatureToRGB(v * 20000);
-            //   ctx.fillStyle = `rgb(${((v * 100) | 0)}, 0, 0)`
-            //   ctx.fillRect(prevX, i * h, x - prevX, h); 
-            // }
-            // prevX = x;
-            // //startTime = new Date();
+      let esp = (new Date()) - this.startTime;
+      let x = esp / (this.project.options.duration * 1000) * this.canvasSize[0];
+      let h = features["rms"] * 1000;
+      this.rmsCanvas.fillStyle = '#FFA500';
+      this.rmsCanvas.fillRect(this.prevX, (this.canvasSize[1] - h) / 2, x - this.prevX, h);
+      this.prevX = x;
+
+      let mfcc = features["mfcc"];
+      let mx = esp / (this.project.options.duration * 1000) * 224;
+      let mh = 224 / mfcc.length;
+      for(let i in mfcc){
+        let v = mfcc[i];
+        if(v >= 0){
+          this.mfccCanvas.fillStyle = `rgb(100,${((v * 100) | 0)}, 100)`
+        }else{
+          this.mfccCanvas.fillStyle = `rgb(100, 100, ${((-v * 100) | 0)})`
+        }
+        this.mfccCanvas.fillRect(this.prevMX, i * mh, mx - this.prevMX, mh); 
+      }
+      this.prevMX = mx;
     },
     async recordComplete(rec,blob){
       console.log("recorded");
       let img = await this.downloadPreview("waveform-client");
-      this.$emit("recorded", {sound : blob, preview : img});
+      let mfcc = await this.downloadPreview("mfcc-client");
+      this.$emit("recorded", {sound : blob, preview : img, mfcc : mfcc});
       this.clearCanvas();
     },
     recordTimeout(){
       console.log("record timeout");
+      this.recorder.finishRecording();
+      this.analyzer.stop();
     },
     downloadPreview(id){
       return new Promise(resolve=>{
@@ -147,6 +126,17 @@ export default {
       });
     },
     async initRecord(){
+      let rCanvas = document.getElementById("waveform-client");
+      this.rmsCanvas = rCanvas.getContext("2d");
+      rCanvas.style.width = "100%";
+      rCanvas.style.height = "100%";
+      rCanvas.width = rCanvas.offsetWidth;
+      rCanvas.height = rCanvas.offsetHeight;
+      this.canvasSize = [rCanvas.width, rCanvas.height];
+      
+      let mCanvas = document.getElementById("mfcc-client");
+      this.mfccCanvas = mCanvas.getContext("2d");
+
       this.audioContext = new AudioContext();
       this.audioGain = this.audioContext.createGain();
       this.audioGain.gain.value = this.volume; // setting it to 10%
@@ -156,11 +146,12 @@ export default {
         this.audioSource = this.audioContext.createMediaStreamSource(stream);
         //stop the input from playing back through the speakers
         this.recorder = new WebAudioRecorder(this.audioSource, {
-            workerDir: "js/",
-            encoding: "wav",
+          workerDir: "js/",
+          encoding: "wav",
+          options:{
             timeLimit: this.project.options.duration,
             encodeAfterRecord: true,
-
+          }
         });
         this.recorder.onComplete = await this.recordComplete.bind(this);
         this.recorder.onTimeout = this.recordTimeout.bind(this);
@@ -179,9 +170,7 @@ export default {
       }
     },
     clearCanvas(){
-      let canvas = document.getElementById("waveform-client");
-      let context = canvas.getContext('2d');
-      context.clearRect(0, 0, canvas.width, canvas.height);
+      this.rmsCanvas.clearRect(0, 0, this.canvasSize[0], this.canvasSize[1]);
     },
     async record(){
       if(!this.audioContext){
@@ -199,26 +188,28 @@ export default {
       this.counting = 1;
       await this.$helper.sleep(1000);
       this.counting = 0;
-      //------------ start ----------//
+      
+      this.startRecord();
+      await this.$helper.sleep(this.project.options.duration * 1000);
+      this.endRecord();
+      await this.$helper.sleep(this.project.options.delay);
+      //--------------------------- //
+    },
+    startRecord(){
       this.recording = true;
-      console.log("=== start record ===");
-      this.$emit("onRecording");
-      //--------------------------- //
-      //this.audioSource.connect(this.audioContext.destination); //get the encoding
       this.recorder.startRecording();
+      this.analyzer.start();
+      this.startTime = new Date();
+      this.prevX = 0;
+      this.prevMX = 0;
       this.startTimer();
-      
-      await this.$helper.sleep(5000);
-      //await this.draw(this.audioContext, this.audioSource, this.project.options.duration * 1000);
-      
-      this.stopTimer();
-      this.recorder.finishRecording();
-      //this.audioSource.disconnect(this.audioContext.destination); //get the encoding
-      //--------------------------- //      
-      //this.$emit("onStopRecord");
-      //await this.$helper.sleep(this.project.options.delay);
-      //--------------------------- //
-      this.recording = false;
+      this.$emit("onRecording");
+      console.log("=== start record ===");
+    },
+    endRecord(){
+      this.recording = false;   
+      this.stopTimer();   
+      this.$emit("onStopRecord");
       console.log("=== end record ===");
     },
     async simulatePlay(){

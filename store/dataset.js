@@ -171,6 +171,13 @@ export const actions = {
         data.sound
       );
     }
+    if (data.mfcc) {
+      await storage.writeFile(
+        this._vm.$fs,
+        `${state.dataset.project}/${data.id}_mfcc.jpg`,
+        data.mfcc
+      );
+    }
     // --- disabled thumbnail for now --- //
     // await storage.writeFile(
     //   this._vm.$fs,
@@ -180,6 +187,7 @@ export const actions = {
     delete data.image;
     delete data.thumbnail;
     delete data.sound;
+    delete data.mfcc;
     commit("addDatasetItem", data);
   },
   async addFileToFs({ state }, { projectId, file }) {

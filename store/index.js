@@ -70,9 +70,17 @@ export const actions = {
       for (let [i, data] of datasets.entries()) {
         let filename = data.id + "." + data.ext;
         let fileData = await dispatch("dataset/getDataAsFile", filename);
+        rawDataset.file(filename, fileData);
+        if (rootState.project.project.projectType === "VOICE_CLASSIFICATION") {
+          let wavFile = data.id + "." + data.sound_ext;
+          let wavData = await dispatch("dataset/getDataAsFile", wavFile);
+          rawDataset.file(wavFile, wavData);
+          let mfccFile = data.id + "_mfcc.jpg";
+          let mfccData = await dispatch("dataset/getDataAsFile", mfccFile);
+          rawDataset.file(mfccFile, mfccData);
+        }
         let progress = ((i + 1) / datasets.length) * 100;
         commit("setSavingProgress", progress);
-        rawDataset.file(filename, fileData);
       }
       //---------- save output (model) ---------//
       zip

@@ -9,7 +9,7 @@
           </p>
           <dataset-counter :current="current.length ? positionOf(current.slice(-1).pop())+1 : null" prefix="Select" suffix="Voices"></dataset-counter>
         </div>
-        <SoundDatasetList v-model="current" :multiple="true" :showInfo="true" @mfcc="onMFCC" @play="onPlay" :volume="volume"></SoundDatasetList>
+        <SoundDatasetList v-model="current" :multiple="true" :showInfo="false" @mfcc="onMFCC" @play="onPlay" :volume="volume"></SoundDatasetList>
       </div>
       <div class="side-panel" style="width: 300px">
         <div class="w-100">
@@ -91,11 +91,12 @@ export default {
         await this.$refs["mfcc-modal"].display(id);
       }
     },
-    async onRecordComplete({sound, preview}){
+    async onRecordComplete({sound, preview, mfcc}){
       let data = {
         id : this.$helper.randomString(16),
         thumbnail : null,
         image: preview,
+        mfcc: mfcc,
         annotate : [],
         sound : sound,
         class: null,
