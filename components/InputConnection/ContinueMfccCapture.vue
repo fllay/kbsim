@@ -41,9 +41,8 @@ export default {
       audioContext: null,
       audioSource: null,
       audioGain: null,
-      rmsCanvas: null,
       mfccCanvas: null,
-      canvasSize : [0,0],
+      mfccCtx: null,
       startTime: 0,
       prevX : 0,
       prevMX : 0,
@@ -57,28 +56,29 @@ export default {
     }
   },
   methods: {
-    analyed(features){
+    onImageReady(img){
+      this.$emit("onImage", img);
+    },
+    async analyed(features){
       let esp = (new Date()) - this.startTime;
-      
-      let mfcc = features["mfcc"];
       let mx = esp / (this.project.options.duration * 1000) * 224;
+      let mfcc = features["mfcc"];
       let mh = 224 / mfcc.length;
       for(let i in mfcc){
         let v = mfcc[i];
         if(v >= 0){
-          this.mfccCanvas.fillStyle = `rgb(100,${((v * 100) | 0)}, 100)`
+          this.mfccCtx.fillStyle = `rgb(100,${((v * 100) | 0)}, 100)`
         }else{
-          this.mfccCanvas.fillStyle = `rgb(100, 100, ${((-v * 100) | 0)})`
+          this.mfccCtx.fillStyle = `rgb(100, 100, ${((-v * 100) | 0)})`
         }
-        this.mfccCanvas.fillRect(this.prevMX, i * mh, mx - this.prevMX, mh); 
+        this.mfccCtx.fillRect(this.prevMX, i * mh, mx - this.prevMX, mh); 
       }
       this.prevMX = mx;
       if(mx >= 224){
-        this.mfccCanvas.clearRect(0, 0, 224, 224);
+        this.mfccCanvas.toBlob(this.onImageReady, "image/jpeg", 0.8);
+        this.mfccCtx.clearRect(0, 0, 224, 224);
         this.prevMX = 0;
         this.startTime = new Date();
-        let img = this.downloadPreview("mfcc-client");
-        this.$emit("onImage", img);
       }
     },
     downloadPreview(id){
@@ -88,8 +88,8 @@ export default {
       });
     },
     async initRecord(){
-      let mCanvas = document.getElementById("mfcc-client");
-      this.mfccCanvas = mCanvas.getContext("2d");
+      this.mfccCanvas = document.getElementById("mfcc-client");
+      this.mfccCtx = this.mfccCanvas.getContext("2d");
 
       this.audioContext = new AudioContext();
       this.audioGain = this.audioContext.createGain();
@@ -102,7 +102,7 @@ export default {
           audioContext: this.audioContext,
           source: this.audioSource,
           bufferSize: 512,
-          featureExtractors: ["rms","mfcc"],
+          featureExtractors: ["mfcc"],
           callback: this.analyed.bind(this)
         });
         return true;
@@ -130,7 +130,8 @@ export default {
       this.$emit("onRecording");
       console.log("=== start record ===");
     },
-    endRecord(){
+    endRecord : function(){
+      console.log("stoppppppppppp");
       this.recording = false;
       this.analyzer.stop();
       this.$emit("onStopRecord");

@@ -8,7 +8,6 @@
       :hide-footer="true"
       @close="onClose"
       @hide="onClose"
-      @shown="onShow"
     >
       <div class="display-screen">
         <ContinueMfccCapture ref="capture" @onImage="onImageReady"></ContinueMfccCapture>
@@ -49,12 +48,8 @@ export default {
       }
       await this.$refs.capture.record();
     },
-    onImageReady : async function(){
-      if(!this.cameraReady){
-        await this.sleep(500);
-        return await this.doInference();
-      }
-      let {image,thumbnail} = await this.$refs.camera.snap();
+    onImageReady : async function(image){
+      console.log(image);
       const formData = new FormData();
       formData.append("image", image, "infer.jpg");
       let project_id = this.project.id;
@@ -73,8 +68,6 @@ export default {
           this.result = res.data.prediction;
           this.prob = res.data.prob;
         }
-        await this.sleep(200);
-        return await this.doInference();
       }catch(err){
         console.log(err);
         return;
@@ -85,6 +78,8 @@ export default {
       console.log("terminated : ", this.terminated);
       if(!this.terminated){
         await this.doInference();
+      }else{
+        this.$refs.capture.endRecord();
       }
     },
     onClose: async function(){

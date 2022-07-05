@@ -1,4 +1,5 @@
 import storage from "~/engine/Storage";
+//C:\Users\listz\AppData\Local\Microsoft\Edge\User Data\Default
 export const state = () => ({
   dataset: {
     project: "", //project id
@@ -323,11 +324,15 @@ export const actions = {
     commit("setDatset", dataset);
   },
   async clearDataset({ commit, state }) {
+    console.log("clear dataset : ", state.dataset.project);
     if (state.dataset.project) {
       // check project exist
+      console.log("check fs", this._vm.$fs);
       if (!this._vm.$fs) {
+        console.log("prepare dataset");
         await prepareDataset(this._vm, state.dataset);
       }
+      console.log("remove folder");
       //removeFolder
       let res = await storage.removeFolder(this._vm.$fs, state.dataset.project);
       if (res) {
