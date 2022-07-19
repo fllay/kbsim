@@ -3,6 +3,34 @@
     <div class="full">
       <canvas class="padding-a-10" id="mfcc-client" width="224" height="224"></canvas>
       <div class="recorder-wrap">
+        <div class="d-flex mr-2">
+          <b-avatar id="change-threshold-popover" button variant="primary" icon="gear-fill" class="align-baseline config-btn"></b-avatar>
+          <b-popover
+            target="change-threshold-popover"
+            triggers="focus"
+            placement="auto"
+          >
+            <template #title>
+              Setting Threshold
+            </template>
+            <div>
+              <b-form-group
+                :label="threshold"
+                label-cols="2"
+                class="mb-0 mt-0 threshold-config"
+              >
+                <b-form-input
+                  class="mt-2"
+                  v-model="threshold"
+                  type="range"
+                  min="1"
+                  max="99"
+                  step="1"
+                ></b-form-input>
+              </b-form-group>
+            </div>
+          </b-popover>
+      </div>
         <div class="vol-adj d-flex">
           <img
             src="~/assets/images/UI/svg/volume-up.svg"
@@ -37,6 +65,7 @@ export default {
     return {
       recording : false,
       volume: 0.7,
+      threshold: 25,
       analyser : null,
       audioContext: null,
       audioSource: null,
@@ -60,25 +89,29 @@ export default {
       this.$emit("onImage", img);
     },
     async analyed(features){
-      let esp = (new Date()) - this.startTime;
-      let mx = esp / (this.project.options.duration * 1000) * 224;
-      let mfcc = features["mfcc"];
-      let mh = 224 / mfcc.length;
-      for(let i in mfcc){
-        let v = mfcc[i];
-        if(v >= 0){
-          this.mfccCtx.fillStyle = `rgb(100,${((v * 100) | 0)}, 100)`
-        }else{
-          this.mfccCtx.fillStyle = `rgb(100, 100, ${((-v * 100) | 0)})`
+      if(this.recording){
+        let esp = (new Date()) - this.startTime;
+        let mx = esp / (this.project.options.duration * 1000) * 224;
+        let mfcc = features["mfcc"];
+        let mh = 224 / mfcc.length;
+        for(let i in mfcc){
+          let v = mfcc[i];
+          if(v >= 0){
+            this.mfccCtx.fillStyle = `rgb(100,${((v * 100) | 0)}, 100)`
+          }else{
+            this.mfccCtx.fillStyle = `rgb(100, 100, ${((-v * 100) | 0)})`
+          }
+          this.mfccCtx.fillRect(this.prevMX, i * mh, mx - this.prevMX, mh); 
         }
-        this.mfccCtx.fillRect(this.prevMX, i * mh, mx - this.prevMX, mh); 
-      }
-      this.prevMX = mx;
-      if(mx >= 224){
-        this.mfccCanvas.toBlob(this.onImageReady, "image/jpeg", 0.8);
-        this.mfccCtx.clearRect(0, 0, 224, 224);
-        this.prevMX = 0;
-        this.startTime = new Date();
+        this.prevMX = mx;
+        if(mx >= 224){
+          this.endRecord();
+        }
+      }else{
+        let h = features["rms"] * 1000;
+        if(h > this.threshold){
+          this.startRecord();
+        }
       }
     },
     downloadPreview(id){
@@ -102,7 +135,7 @@ export default {
           audioContext: this.audioContext,
           source: this.audioSource,
           bufferSize: 512,
-          featureExtractors: ["mfcc"],
+          featureExtractors: ["rms","mfcc"],
           callback: this.analyed.bind(this)
         });
         return true;
@@ -118,23 +151,33 @@ export default {
           return;
         }
       }
-      this.startRecord();
+      this.startListening();
       //--------------------------- //
+    },
+    startListening(){
+      this.analyzer.start();
+    },
+    stopListening(){
+      console.log("stop recording");
+      this.recording = false;
+      this.analyzer.stop();
     },
     startRecord(){
       this.recording = true;
-      this.analyzer.start();
       this.startTime = new Date();
       this.prevX = 0;
       this.prevMX = 0;
+      this.mfccCtx.clearRect(0, 0, 224, 224);
       this.$emit("onRecording");
       console.log("=== start record ===");
     },
     endRecord : function(){
-      console.log("stoppppppppppp");
       this.recording = false;
-      this.analyzer.stop();
-      this.$emit("onStopRecord");
+      this.mfccCanvas.toBlob(this.onImageReady, "image/jpeg", 0.8);
+      //this.mfccCtx.clearRect(0, 0, 224, 224);
+      this.prevMX = 0;
+      this.startTime = new Date();
+      this.$emit("onEndRecord");
       console.log("=== end record ===");
     },
   }

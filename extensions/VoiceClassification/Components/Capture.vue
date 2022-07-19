@@ -36,6 +36,7 @@
             height="96"
             alt=""
             srcset=""
+            @click="endRecord"
           />
         </div>
       </div>
@@ -78,8 +79,15 @@ export default {
       if(!recorder){
         return;
       }
-      await recorder.record();
+      await recorder.continueRecord();
+    },
+    async endRecord(){
       this.isRecording = false;
+      let recorder = this.$refs["soundCapture"];
+      if(!recorder){
+        return;
+      }
+      await recorder.endContinueRecord();
     },
     async onPlay(id){
       if(this.$refs.soundCapture){
@@ -105,6 +113,7 @@ export default {
       };
       let res = await this.addData(data);
       this.current = [data.id];
+      this.isRecording = false;
     },
     async play(id){
 
@@ -125,9 +134,10 @@ $primary-color: #007e4e;
   }
 }
 .op-btn-disable{
-  pointer-events: none;  
-  -webkit-filter: grayscale(100%); /* Safari 6.0 - 9.0 */
-  filter: grayscale(100%);
+  cursor: pointer;
+  //pointer-events: none;  
+  //-webkit-filter: grayscale(100%); /* Safari 6.0 - 9.0 */
+  //filter: grayscale(100%);
 }
 .side-panel {
   display: flex;

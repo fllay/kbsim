@@ -49,7 +49,6 @@ export default {
       await this.$refs.capture.record();
     },
     onImageReady : async function(image){
-      console.log(image);
       const formData = new FormData();
       formData.append("image", image, "infer.jpg");
       let project_id = this.project.id;

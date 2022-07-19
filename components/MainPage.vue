@@ -17,6 +17,7 @@
     <open-project-modal></open-project-modal>
     <delete-project-modal></delete-project-modal>
     <saving-project></saving-project>
+    <connect-wifi-modal></connect-wifi-modal>
   </div>
 </template>
 <script>
@@ -27,6 +28,7 @@ import OpenProjectModal from "./Modals/OpenProjectModal.vue";
 import DeleteProjectModal from "./Modals/DeleteProjectModal.vue";
 import ExtensionAsyncComponent from './ExtensionAsyncComponent.vue';
 import SavingProject from './Modals/SavingProject.vue';
+import ConnectWifiModal from "./Modals/ConnectWifiModal.vue";
 
 export default {
   components: { 
@@ -35,7 +37,8 @@ export default {
     OpenProjectModal,
     DeleteProjectModal,
     ExtensionAsyncComponent,
-    SavingProject
+    SavingProject,
+    ConnectWifiModal
   },
   name : "MainPage",
     data(){
@@ -44,6 +47,10 @@ export default {
       loaded: false,
       //url: "http://192.168.88.243:8080/stream?topic=/output/image_detected&type=ros_compressed"
     };
+  },
+  async created(){
+    console.log("web page created");
+    await this.getCurrentWifi();
   },
   computed: {
     ...mapState('project', [
@@ -55,6 +62,7 @@ export default {
     ...mapState(['currentWifi','connectWifiModal','isRunning'])
   },
   methods: {
+    ...mapActions(["getCurrentWifi"]),
     projectCreated(project){
       this.selectedMenu = 0;
       this.$nextTick(()=>{

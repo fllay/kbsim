@@ -10,9 +10,9 @@
         <div v-if="project.id" class="proj-type">Type : {{ project.projectTypeTitle }}</div>
         
         <div v-if="project.id" class="header-action-button">
-          <b-button :disabled="currentDevice == 'BROWSER'" @click="setConnectWifiModal(true)">
-            <b-icon class="mr-1" :icon="currentDevice == 'BROWSER' ? 'wifi' : (currentWifi?'wifi':'wifi-off')"></b-icon>
-            {{ currentDevice == "BROWSER" ? (isOnline?"ONLINE":"OFFLINE") : currentWifi? currentWifi : "No Internet" }}
+          <b-button :disabled="currentDevice == 'BROWSER'" @click="openWiFiModal">
+            <b-icon class="mr-1" :icon="currentDevice == 'BROWSER' ? 'wifi' : (currentWifi ? 'wifi':'wifi-off')"></b-icon>
+            {{ currentDevice == "BROWSER" ? (isOnline?"ONLINE":"OFFLINE") : currentWifi ? (currentWifi.ssid ? currentWifi.ssid : "No Internet") : "No Internet" }}
           </b-button>
 
           <b-button @click="onToggleDevice" :disabled="initialDevice == 'BROWSER'">
@@ -48,10 +48,10 @@
         <li
           :class="{
             current: selectedMenu == 3,
-            inactive: !shouldTrainEnable,
+            inactive: getLabeledLength <= 0,
           }"
           @click="
-            if (shouldTrainEnable) {
+            if (getLabeledLength > 0) {
               handleTabChange(3);
             }
           "
@@ -144,19 +144,17 @@ export default {
     ...mapGetters("dataset",['dataLength',"getLabeledLength"]),
     isOnline(){
       return window.navigator.onLine;
-    }
+    },
   },
   methods : {
-    ...mapMutations(['setConnectWifiModal','setDevice']),
+    ...mapMutations(['setDevice']),
+    openWiFiModal(){
+      console.log("connect wifi");
+      this.$bvModal.show('wifi_conn');
+    },
     handleTabChange(tabIndex){
       //this.menu = tabIndex;
       this.$emit("menuChange", tabIndex);
-    },
-    shouldAnnotateEnable(){
-      return this.dataLength > 1;
-    },
-    shouldTrainEnable(){
-      return this.getLabeledLength() > 0;
     },
     onToggleDevice(){
       if(this.currentDevice == "BROWSER"){

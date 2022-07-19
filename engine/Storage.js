@@ -10,9 +10,12 @@ export default {
           TEMPORARY,
           targetBytes,
           (success) => {
+            console.log("request new file system success");
             resolve(success);
           },
           (errp) => {
+            console.log("request new file system error");
+            console.log(errp);
             reject(errp);
           }
         );

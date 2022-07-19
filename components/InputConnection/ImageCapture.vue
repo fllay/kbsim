@@ -1,31 +1,36 @@
 <template>
   <div class="display-panel liveview">
-    <div class="config-camera-float-button">
-      <b-avatar icon="gear-fill" :size="32" button></b-avatar>
-      <b-avatar v-if="captureDevices.length > 1" icon="arrow-repeat" :size="32" button @click="nextCamera"></b-avatar>
+    <div v-if="currentDevice == 'BROWSER'">
+      <div class="config-camera-float-button">
+        <b-avatar icon="gear-fill" :size="32" button></b-avatar>
+        <b-avatar v-if="captureDevices.length > 1" icon="arrow-repeat" :size="32" button @click="nextCamera"></b-avatar>
+      </div>
+      <vue-web-cam
+        v-show="!source.startsWith('http')"
+        :width="width"
+        height="auto"
+        ref="webcam"
+        @cameras="onCameras"
+        @started="onStarted"
+        @stopped="onStoped"
+        @camera-change="cameraChanged"
+        :deviceId="captureDevices.length > 0 ? captureDevices[currentCaptureDeviceIndex].deviceId : null"
+      />
     </div>
-    <vue-web-cam
-      v-show="!source.startsWith('http')"
-      :width="width"
-      height="auto"
-      ref="webcam"
-      @cameras="onCameras"
-      @started="onStarted"
-      @stopped="onStoped"
-      @camera-change="cameraChanged"
-      :deviceId="captureDevices.length > 0 ? captureDevices[currentCaptureDeviceIndex].deviceId : null"
-    />
-  </div>
-  <!-- <b-img
+    <div v-else-if="currentDevice == 'ROBOT'">
+      <b-img
             ref="displayImage"
             crossorigin="anonymous"
-            width="260"
-            src=""
-          >
-          </b-img> -->
+            :width="width"
+            :src="streamUrl+'?topic=/output/image_raw&type=ros_compressed'"
+      >
+      </b-img>
+    </div>
+  </div>
+  
 </template>
 <script>
-
+import { mapState, mapActions, mapMutations,mapGetters  } from 'vuex';
 export default {
   props : {
     source: {
@@ -44,6 +49,14 @@ export default {
       canvas : null,
       canvas_thumbnail : null,
     }
+  },
+  created(){
+    if(this.currentDevice == "ROBOT"){
+      this.$emit("started");
+    }
+  },
+  computed: {
+    ...mapState(['currentDevice','initialDevice','streamUrl']),
   },
   methods : {
     onCameras(devices){
@@ -85,17 +98,19 @@ export default {
       });
     },
     async captureWithTumbnail(thumbnail_height=120) {
-      let video = this.$refs.webcam.$refs.video;
+      let video = this.currentDevice == "BROWSER" ? this.$refs.webcam.$refs.video : this.$refs.displayImage;
+      let width = this.currentDevice == "BROWSER" ? video.videoWidth : video.clientWidth;
+      let height = this.currentDevice == "BROWSER" ? video.videoHeight : video.clientHeight;
       if (!this.ctx) {
         let canvas = document.createElement("canvas");
-        canvas.height = video.videoHeight;
-        canvas.width = video.videoWidth;
+        canvas.height = height;
+        canvas.width = width;
         this.canvas = canvas;
         this.ctx = canvas.getContext("2d");
       }
       if(!this.ctx_thumbnail || thumbnail_height != this.canvas_thumbnail.height){
         let canvas = document.createElement("canvas");
-        let imageRatio = video.videoWidth/video.videoHeight;
+        let imageRatio = width/height;
         let newWidth = thumbnail_height * imageRatio;
         canvas.width = newWidth;
         canvas.height = thumbnail_height;

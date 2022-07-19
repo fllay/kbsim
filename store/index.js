@@ -1,9 +1,15 @@
 import JSZip from "jszip";
+import axios from "axios";
+
+const isLocalHost =
+  location.hostname === "localhost" || location.hostname === "127.0.0.1";
+
 export const state = () => ({
-  initialDevice: "BROWSER",
-  currentDevice: "BROWSER", //BROWSER, ROBOT , should auto detect
-  serverUrl: "http://localhost:8989/",
-  currentWifi: "",
+  initialDevice: isLocalHost ? "ROBOT" : "BROWSER",
+  currentDevice: isLocalHost ? "ROBOT" : "BROWSER", //BROWSER, ROBOT , should auto detect
+  serverUrl: "http://192.168.1.87:5000/",
+  streamUrl: "http://192.168.1.87:8080/stream",
+  currentWifi: null,
   isRunning: false,
   selectedMenu: 0,
   //----- save project ------//
@@ -30,17 +36,9 @@ export const mutations = {
   setSavingProgress(state, progress) {
     state.savingProgress = progress;
   },
-  // setOpening(state, data) {
-  //   state.opening = data;
-  // },
-  // setOpeningProgress(state, progress) {
-  //   state.openingProgress = progress;
-  // },
-  // restoreProject(state, currentState) {
-  //   state.dataset = currentState.dataset;
-  //   state.project = currentState.project;
-  //   //console.log(state);
-  // },
+  setCurrentWifi(state, wifi) {
+    state.currentWifi = wifi;
+  },
 };
 
 export const actions = {
@@ -48,10 +46,21 @@ export const actions = {
     //do something
     context.commit("setDevice", deviceType);
   },
-  async listWifi(context) {
-    // fetch all wifi
-    let wifis = [];
-    //context.commit("setAvailableWifi", wifis);
+  async getCurrentWifi({ state, commit }) {
+    try {
+      const res = await axios.get(state.serverUrl + "/wifi_current");
+      if (res && res.data.result && res.data.result == "OK") {
+        console.log("current wifi = ");
+        console.log(res.data.data);
+        if (Object.keys(res.data.data).length != 0) {
+          commit("setCurrentWifi", res.data.data);
+        } else {
+          commit("setCurrentWifi", null);
+        }
+      }
+    } catch (err) {
+      console.log("load wifi failed ", err);
+    }
   },
   async connectWifi(context, name) {
     //context.commit("setWiFi", name);

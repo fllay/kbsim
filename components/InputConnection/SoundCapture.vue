@@ -4,6 +4,9 @@
     <p v-if="counting > 0" class="counting-timer-p">
       {{ counting }}
     </p>
+    <div class="voice-meter">
+      <canvas id="uv-meter" width="20"></canvas>
+    </div>
     <div v-show="id == null" class="full">
       <canvas id="waveform-client"></canvas>
       <canvas id="mfcc-client" width="224" height="224" style="display:none;"></canvas>
@@ -20,6 +23,34 @@
       </WaveFormPlayer>
     </div>
     <div class="recorder-wrap">
+      <div class="d-flex">
+        <b-avatar id="change-threshold-popover" button variant="primary" icon="gear-fill" class="align-baseline config-btn"></b-avatar>
+        <b-popover
+          target="change-threshold-popover"
+          triggers="focus"
+          placement="auto"
+        >
+          <template #title>
+            Setting Threshold
+          </template>
+          <div>
+            <b-form-group
+              :label="threshold"
+              label-cols="2"
+              class="mb-0 mt-0 threshold-config"
+            >
+              <b-form-input
+                class="mt-2"
+                v-model="threshold"
+                type="range"
+                min="1"
+                max="99"
+                step="1"
+              ></b-form-input>
+            </b-form-group>
+          </div>
+        </b-popover>
+      </div>
       <div class="vol-adj d-flex">
         <img
           src="~/assets/images/UI/svg/volume-up.svg"
@@ -59,8 +90,11 @@ export default {
   // },
   data() {
     return {
+      mode: "single_short", //"continue"
+      drawMode: "listening", //recording
       recording : false,
       volume: 0.5,
+      threshold: 25,
       timeCurrent: 0,
       timeCounter : null,
       counting: 0,
@@ -71,6 +105,7 @@ export default {
       audioGain: null,
       rmsCanvas: null,
       mfccCanvas: null,
+      uvCanvas: null,
       canvasSize : [0,0],
       startTime: 0,
       prevX : 0,
@@ -86,26 +121,37 @@ export default {
   },
   methods: {
     analyed(features){
-      let esp = (new Date()) - this.startTime;
-      let x = esp / (this.project.options.duration * 1000) * this.canvasSize[0];
-      let h = features["rms"] * 1000;
-      this.rmsCanvas.fillStyle = '#FFA500';
-      this.rmsCanvas.fillRect(this.prevX, (this.canvasSize[1] - h) / 2, x - this.prevX, h);
-      this.prevX = x;
+      if(this.recording){ // draw on record
+        let esp = (new Date()) - this.startTime;
+        let x = esp / (this.project.options.duration * 1000) * this.canvasSize[0];
+        let h = features["rms"] * 1000;
+        this.rmsCanvas.fillStyle = '#FFA500';
+        this.rmsCanvas.fillRect(this.prevX, (this.canvasSize[1] - h) / 2, x - this.prevX, h);
+        this.prevX = x;
 
-      let mfcc = features["mfcc"];
-      let mx = esp / (this.project.options.duration * 1000) * 224;
-      let mh = 224 / mfcc.length;
-      for(let i in mfcc){
-        let v = mfcc[i];
-        if(v >= 0){
-          this.mfccCanvas.fillStyle = `rgb(100,${((v * 100) | 0)}, 100)`
-        }else{
-          this.mfccCanvas.fillStyle = `rgb(100, 100, ${((-v * 100) | 0)})`
+        let mfcc = features["mfcc"];
+        let mx = esp / (this.project.options.duration * 1000) * 224;
+        let mh = 224 / mfcc.length;
+        for(let i in mfcc){
+          let v = mfcc[i];
+          if(v >= 0){
+            this.mfccCanvas.fillStyle = `rgb(100,${((v * 100) | 0)}, 100)`
+          }else{
+            this.mfccCanvas.fillStyle = `rgb(100, 100, ${((-v * 100) | 0)})`
+          }
+          this.mfccCanvas.fillRect(this.prevMX, i * mh, mx - this.prevMX, mh); 
         }
-        this.mfccCanvas.fillRect(this.prevMX, i * mh, mx - this.prevMX, mh); 
+        this.prevMX = mx;
+      }else{ //listening mode
+        this.uvCanvas.fillRect(0, (this.canvasSize[1] - h), 20, h);
+        this.uvCanvas.fillStyle = '#FF0000';
+        let h = features["rms"] * 1000;
+        this.uvCanvas.fillRect(0, (this.canvasSize[1] - h), 20, h);
+        if(h > this.threshold){
+          this.uvCanvas.clearRect(0, 0, 20, this.canvasSize[1]);
+          this.startRecord();
+        }
       }
-      this.prevMX = mx;
     },
     async recordComplete(rec,blob){
       console.log("recorded");
@@ -118,6 +164,7 @@ export default {
       console.log("record timeout");
       this.recorder.finishRecording();
       this.analyzer.stop();
+      this.endRecord();
     },
     downloadPreview(id){
       return new Promise(resolve=>{
@@ -126,6 +173,7 @@ export default {
       });
     },
     async initRecord(){
+
       let rCanvas = document.getElementById("waveform-client");
       this.rmsCanvas = rCanvas.getContext("2d");
       rCanvas.style.width = "100%";
@@ -136,6 +184,10 @@ export default {
       
       let mCanvas = document.getElementById("mfcc-client");
       this.mfccCanvas = mCanvas.getContext("2d");
+
+      let uvMeterCanvas = document.getElementById("uv-meter");
+      uvMeterCanvas.height = rCanvas.height;
+      this.uvCanvas = uvMeterCanvas.getContext("2d");
 
       this.audioContext = new AudioContext();
       this.audioGain = this.audioContext.createGain();
@@ -171,8 +223,9 @@ export default {
     },
     clearCanvas(){
       this.rmsCanvas.clearRect(0, 0, this.canvasSize[0], this.canvasSize[1]);
+      this.uvCanvas.clearRect(0, 0, 20, this.canvasSize[1]);
     },
-    async record(){
+    async continueRecord(){
       if(!this.audioContext){
         let res = await this.initRecord();
         if(!res){
@@ -188,17 +241,39 @@ export default {
       this.counting = 1;
       await this.$helper.sleep(1000);
       this.counting = 0;
+      //---------------------------//
+      this.analyzer.start();
+    },
+    async endContinueRecord(){
+      this.analyzer.stop();
+    },
+
+    async singleRecord(){
+      if(!this.audioContext){
+        let res = await this.initRecord();
+        if(!res){
+          return;
+        }
+      }
+      this.clearCanvas();
+      //--------- countdown --------//
+      this.counting = 3;
+      await this.$helper.sleep(1000);
+      this.counting = 2;
+      await this.$helper.sleep(1000);
+      this.counting = 1;
+      await this.$helper.sleep(1000); 
+      this.counting = 0;
       
       this.startRecord();
       await this.$helper.sleep(this.project.options.duration * 1000);
       this.endRecord();
-      await this.$helper.sleep(this.project.options.delay);
-      //--------------------------- //
     },
+
     startRecord(){
       this.recording = true;
       this.recorder.startRecording();
-      this.analyzer.start();
+      //this.analyzer.start();
       this.startTime = new Date();
       this.prevX = 0;
       this.prevMX = 0;
@@ -212,6 +287,7 @@ export default {
       this.$emit("onStopRecord");
       console.log("=== end record ===");
     },
+    
     async simulatePlay(){
       if(this.$refs.wavsuf){
         this.startTimer();
@@ -304,5 +380,15 @@ $primary-color: #007e4e;
   position: relative;
   width: 100%;
   height: 100%;
+}
+.config-btn{
+  margin-right: 10px;
+}
+.voice-meter{
+  position: absolute;
+  height: 100%;
+}
+.threshold-config{
+  width: 180px;
 }
 </style>

@@ -5,7 +5,7 @@
         <b-button class="btn-create" variant="primary" @click="openColab">Create</b-button>
       </b-input-group-prepend>
       <b-form-input
-        :value="url"
+        :value="currentDevice == 'ROBOT' ? serverUrl : url"
         @change="connectServer"
         placeholder="Put Google Colab URL here . . ."
       ></b-form-input>
@@ -61,6 +61,7 @@ export default {
     return {
       file: null,
       isDownloading : false,
+      url : ""
     };
   },
   methods: {
@@ -110,6 +111,7 @@ export default {
     
   },
   computed: {
+    ...mapState(["currentDevice","serverUrl"]),
     ...mapState("server",["url","isConnected","isTraining","isTerminating","isTrained","isConverting","isConverted"]),
     downloadable: function() {
       return this.isDone && !this.isDownloading;
