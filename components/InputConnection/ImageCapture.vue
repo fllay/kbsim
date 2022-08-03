@@ -2,7 +2,7 @@
   <div class="display-panel liveview">
     <div v-if="currentDevice == 'BROWSER'">
       <div class="config-camera-float-button">
-        <b-avatar icon="gear-fill" :size="32" button></b-avatar>
+        <b-avatar icon="gear-fill" :size="32"  button @click="showUnity"></b-avatar>
         <b-avatar v-if="captureDevices.length > 1" icon="arrow-repeat" :size="32" button @click="nextCamera"></b-avatar>
       </div>
       <vue-web-cam
@@ -26,12 +26,18 @@
       >
       </b-img>
     </div>
+    <unity-modal></unity-modal>
   </div>
   
 </template>
 <script>
 import { mapState, mapActions, mapMutations,mapGetters  } from 'vuex';
+import UnityModal from "../Modals/UnityModal.vue";
+
 export default {
+  components: { 
+    UnityModal,
+  },
   props : {
     source: {
       type: String,
@@ -78,9 +84,16 @@ export default {
       console.log("change camera to : ",this.captureDevices[this.currentCaptureDeviceIndex].deviceId);
       this.$refs.webcam.changeCamera(this.captureDevices[this.currentCaptureDeviceIndex].deviceId);
     },
+    openUnityModal(){
+      //this.$refs["unity-modal"].show();
+      console.log("Modal!!!!!")
+    },
     cameraChanged(deviceId){
       this.ctx = null;
       this.ctx_thumbnail = null;
+    },
+    showUnity(){
+      this.$modal.show('unity-modal');
     },
     async snap(){
       let image = await this.captureWithTumbnail();

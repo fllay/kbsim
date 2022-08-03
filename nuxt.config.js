@@ -33,6 +33,8 @@ export default {
     "~/plugins/Baklava.js",
     "~/plugins/VueMultipleProgress.js",
     "~/plugins/ServerSocket.js",
+    "~/plugins/vue-js-modal.js",
+    "~/plugins/vue-unity-webgl.js",
   ],
   components: true,
   buildModules: [
