@@ -10,6 +10,8 @@ export default {
     MainPage
   }
 }
+
 </script>
+
 <style>
 </style>
